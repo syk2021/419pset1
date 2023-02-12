@@ -3,8 +3,6 @@ from contextlib import closing
 from sqlite3 import connect
 from table import Table
 
-
-
 class Query():  
     def __init__(self, db_file) -> None:
         self.db_file = db_file
@@ -12,13 +10,13 @@ class Query():
     def search(self, dep=None, agt=None, cls=None, label=None):
         with connect(self.db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
-
-                smt_str = "SELECT * FROM objects LIMIT 5"
-                
-                
+                smt_str = "SELECT objects.label, agents.name FROM (objects"
+                if agt:
+                    smt_str += "INNER JOIN productions ON productions.obj_id = objects.id) INNER JOIN agents ON productions.agt_id = agents.id"
+                    smt_str += "WHERE agents.name = 'John Smibert'"
                 cursor.execute(smt_str)
                 
-                
+                # SELECT objects.label, agents.name FROM (objects INNER JOIN productions ON productions.obj_id = objects.id) INNER JOIN agents ON productions.agt_id = agents.id;
                 
                 
                 
