@@ -43,8 +43,6 @@ class Query():
                 # SELECT objects.label, agents.name FROM (objects INNER JOIN productions ON productions.obj_id = objects.id) INNER JOIN agents ON productions.agt_id = agents.id;
                 data = cursor.fetchall()
                 print(len(data))
-
-                rows_list = []
                 
                 for row in data:
                     print(row)
