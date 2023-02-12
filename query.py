@@ -12,7 +12,7 @@ class Query():
         with connect(self.db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 # objects.id, objects.label, agents.name, objects.date, departments.name, classifiers.name
-                smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name, objects.date, departments.name, classifiers.name FROM objects INNER JOIN productions ON productions.obj_id =  objects.id INNER JOIN agents ON productions.agt_id = agents.id"
+                smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name, productions.part, objects.date, departments.name, classifiers.name FROM objects INNER JOIN productions ON productions.obj_id =  objects.id INNER JOIN agents ON productions.agt_id = agents.id"
                 # joining objects and departments, using objects_departments
                 smt_str += " INNER JOIN objects_departments ON objects_departments.obj_id = objects.id INNER JOIN departments ON departments.id = objects_departments.dep_id"
                 # # joining objects and classifiers, using objects_classifiers
@@ -49,27 +49,33 @@ class Query():
 
                 print(Table(self.columns, rows_list))
 
+
     def clean_data(self, data):
         obj_dict = {}
         for row in data:
+            print(row)
             id = str(row[0])
             label = row[1]
             produced_by = row[2]
-            date = row[3]
-            department = row[4]
-            classifier = row[5]
+            part_produced = row[3]
+            date = row[4]
+            department = row[5]
+            classifier = row[6]
+            agent_and_part = f"{produced_by} ({part_produced})"
 
             if label not in obj_dict:
                 obj_dict[label] = {
                     "id" : id,
                     "label" : label,
-                    "produced_by" : produced_by,
+                    "produced_by" : [agent_and_part],
                     "date" : date,
                     "department": [department],
                     "classifier": [classifier] 
                 }
             else:
-                obj_dict[label]['department'].append("test")
+                if agent_and_part not in obj_dict[label]['produced_by']:
+                    obj_dict[label]['produced_by'].append(agent_and_part)
+                    obj_dict[label]['produced_by'].sort()
                 if department not in obj_dict[label]['department']:
                     obj_dict[label]['department'].append(department)
                     obj_dict[label]['department'].sort()
@@ -77,7 +83,7 @@ class Query():
                     obj_dict[label]['classifier'].append(classifier)
                     obj_dict[label]['classifier'].sort()
                     
-            return obj_dict
+        return obj_dict
 
 
 
