@@ -3,37 +3,39 @@ from contextlib import closing
 from sqlite3 import connect
 from table import Table
 from query import Query
+import argparse
+
 DB_NAME = "./lux.sqlite"
 
 class LuxCLI():
     
     def __init__(self) -> None:
         self.query = Query(DB_NAME)
+        self.department = None
+        self.agent = None
+        self.classifier = None
+        self.label = None
 
-        department = None
-        agent = None
-        classifier = None
-        label = None
+        self.parse_args()
+        self.query.search(dep=self.department, agt=self.agent, classifier=self.classifier, label=self.label)
 
-        if '-d' in argv:
-            d_index = argv.index('-d')
-            department = argv[d_index+1]
+    def parse_args(self):
+        parser = argparse.ArgumentParser(
+                    prog = 'lux.py', allow_abbrev=False)
 
-        if '-a' in argv:
-            a_index = argv.index('-a')
-            agent = argv[a_index+1]
-        
-        if '-c' in argv:
-            c_index = argv.index('-c')
-            classifier = argv[c_index+1]
-        
-        if '-l' in argv:
-            l_index = argv.index('-l')
-            label = argv[l_index+1]
-        
-        self.query.search(dep=department, agt=agent, cls=classifier, label=label)
+        parser.add_argument("-d", help="dep show only those objects whose department label contains department", metavar='\b')
+        parser.add_argument("-a", help="agt show only those objects produced by an agent with name containing agentname", metavar='\b')
+        parser.add_argument("-c", help="acls show only those objects classified with a classifier having a name containing cls", metavar='\b')
+        parser.add_argument("-l", help="label show only those objects whose label contains label", metavar='\b')
 
-        pass
+        args = parser.parse_args()
+
+        self.department = args.d
+        self.agent = args.a
+        self.classifier = args.c
+        self.label = args.l
+
+
 
 if __name__ == '__main__':
     LuxCLI()
