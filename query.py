@@ -20,35 +20,49 @@ class Query():
 
                 # counting how many variables were not None 
                 count = sum(x is not None for x in [dep, agt, classifier, label])
-
+                smt_count = 0
+                smt_params = []
+                
                 if dep or agt or classifier or label:
                     smt_str += " WHERE"
                 if dep:
-                    smt_str += f" departments.name LIKE '%{dep}%'"
+                    smt_str += f" departments.name LIKE ?"
+                    smt_params.append(f"%{dep}%")
+                    smt_count += 1
                 if agt:
-                    if count > 1:
+                    if smt_count >= 1:
                         smt_str += " AND"
-                    smt_str += f" agents.name LIKE '%{agt}%'"
+                    smt_str += f" agents.name LIKE ?"
+                    smt_count += 1
+                    smt_params.append(f"%{agt}%")
                 if classifier:
-                    if count > 1:
+                    if smt_count >= 1:
                         smt_str += " AND"
-                    smt_str += f" classifiers.name LIKE '%{classifier}%'"
+                    smt_str += f" classifiers.name LIKE ?"
+                    smt_count += 1
+                    smt_params.append(f"%{classifier}%")
                 if label:
-                    if count > 1:
+                    if smt_count >= 1:
                         smt_str += " AND"
-                    smt_str += f" objects.label LIKE '%{label}%'"
+                    smt_str += f" objects.label LIKE ?"
+                    smt_count += 1
+                    smt_params.append(f"%{label}%")
+                smt_str += " ORDER BY objects.label, objects.date, agents.name, productions.part, classifiers.name, departments.name"
 
-
-                cursor.execute(smt_str)
+                cursor.execute(smt_str, smt_params)
                 data = cursor.fetchall()
                 obj_dict = self.clean_data(data)
                 rows_list = []
 
                 for key in obj_dict:
+                    if len(rows_list) == 1000:
+                        break
                     rows_list.append(list(obj_dict[key].values()))
 
-                print(Table(self.columns, rows_list))
+                search_count = len(rows_list)
 
+                print(f"Search produced {search_count} objects.")
+                print(Table(self.columns, rows_list))
 
     def clean_data(self, data):
         obj_dict = {}
@@ -62,8 +76,8 @@ class Query():
             classifier = row[6]
             agent_and_part = f"{produced_by} ({part_produced})"
 
-            if label not in obj_dict:
-                obj_dict[label] = {
+            if id not in obj_dict:
+                obj_dict[id] = {
                     "id" : id,
                     "label" : label,
                     "produced_by" : [agent_and_part],
@@ -72,15 +86,15 @@ class Query():
                     "classifier": [classifier] 
                 }
             else:
-                if agent_and_part not in obj_dict[label]['produced_by']:
-                    obj_dict[label]['produced_by'].append(agent_and_part)
-                    obj_dict[label]['produced_by'].sort()
-                if department not in obj_dict[label]['department']:
-                    obj_dict[label]['department'].append(department)
-                    obj_dict[label]['department'].sort()
-                if classifier not in obj_dict[label]['classifier']:
-                    obj_dict[label]['classifier'].append(classifier)
-                    obj_dict[label]['classifier'].sort()
+                if agent_and_part not in obj_dict[id]['produced_by']:
+                    obj_dict[id]['produced_by'].append(agent_and_part)
+                    obj_dict[id]['produced_by'].sort()
+                if department not in obj_dict[id]['department']:
+                    obj_dict[id]['department'].append(department)
+                    obj_dict[id]['department'].sort()
+                if classifier not in obj_dict[id]['classifier']:
+                    obj_dict[id]['classifier'].append(classifier)
+                    obj_dict[id]['classifier'].sort()
                     
         return obj_dict
 

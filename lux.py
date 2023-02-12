@@ -23,10 +23,10 @@ class LuxCLI():
         parser = argparse.ArgumentParser(
                     prog = 'lux.py', allow_abbrev=False)
 
-        parser.add_argument("-d", help="dep show only those objects whose department label contains department", metavar='\b')
-        parser.add_argument("-a", help="agt show only those objects produced by an agent with name containing agentname", metavar='\b')
-        parser.add_argument("-c", help="acls show only those objects classified with a classifier having a name containing cls", metavar='\b')
-        parser.add_argument("-l", help="label show only those objects whose label contains label", metavar='\b')
+        parser.add_argument("-d", help="show only those objects whose department label contains department", metavar='dep')
+        parser.add_argument("-a", help="show only those objects produced by an agent with name containing agentname", metavar='agt')
+        parser.add_argument("-c", help="show only those objects classifier with a classifier having a name containing cls", metavar='cls')
+        parser.add_argument("-l", help="show only those objects whose label contains label", metavar='label')
 
         args = parser.parse_args()
 
