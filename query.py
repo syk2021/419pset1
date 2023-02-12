@@ -53,7 +53,6 @@ class Query():
     def clean_data(self, data):
         obj_dict = {}
         for row in data:
-            print(row)
             id = str(row[0])
             label = row[1]
             produced_by = row[2]
