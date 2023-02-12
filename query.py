@@ -19,7 +19,6 @@ class Query():
                 smt_str += " INNER JOIN objects_classifiers ON objects_classifiers.obj_id = objects.id INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
 
                 # counting how many variables were not None 
-                count = sum(x is not None for x in [dep, agt, classifier, label])
                 smt_count = 0
                 smt_params = []
                 
