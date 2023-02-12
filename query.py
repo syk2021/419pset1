@@ -6,12 +6,13 @@ from table import Table
 class Query():  
     def __init__(self, db_file) -> None:
         self.db_file = db_file
+        self.columns = ["ID", "Label", "Produced By", "Date", "Member Of", "Classified As"]
 
     def search(self, dep=None, agt=None, classifier=None, label=None):
         with connect(self.db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 # objects.id, objects.label, agents.name, objects.date, departments.name, classifiers.name
-                smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name, objects.date FROM objects INNER JOIN productions ON productions.obj_id =  objects.id INNER JOIN agents ON productions.agt_id = agents.id"
+                smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name, objects.date, departments.name, classifiers.name FROM objects INNER JOIN productions ON productions.obj_id =  objects.id INNER JOIN agents ON productions.agt_id = agents.id"
                 # joining objects and departments, using objects_departments
                 smt_str += " INNER JOIN objects_departments ON objects_departments.obj_id = objects.id INNER JOIN departments ON departments.id = objects_departments.dep_id"
                 # # joining objects and classifiers, using objects_classifiers
@@ -36,19 +37,48 @@ class Query():
                     if count > 1:
                         smt_str += " AND"
                     smt_str += f" objects.label LIKE '%{label}%'"
-                # print(smt_str)
+
+
                 cursor.execute(smt_str)
-                
-                # SELECT agents.name FROM objects NATURAL JOIN agents;
-                # SELECT objects.label, agents.name FROM (objects INNER JOIN productions ON productions.obj_id = objects.id) INNER JOIN agents ON productions.agt_id = agents.id;
                 data = cursor.fetchall()
-                print(len(data))
+                obj_dict = self.clean_data(data)
+                rows_list = []
 
-                # random
-                for row in data:
-                    print(row)
+                for key in obj_dict:
+                    rows_list.append(list(obj_dict[key].values()))
 
-    
+                print(Table(self.columns, rows_list))
+
+    def clean_data(self, data):
+        obj_dict = {}
+        for row in data:
+            id = str(row[0])
+            label = row[1]
+            produced_by = row[2]
+            date = row[3]
+            department = row[4]
+            classifier = row[5]
+
+            if label not in obj_dict:
+                obj_dict[label] = {
+                    "id" : id,
+                    "label" : label,
+                    "produced_by" : produced_by,
+                    "date" : date,
+                    "department": [department],
+                    "classifier": [classifier] 
+                }
+            else:
+                obj_dict[label]['department'].append("test")
+                if department not in obj_dict[label]['department']:
+                    obj_dict[label]['department'].append(department)
+                    obj_dict[label]['department'].sort()
+                if classifier not in obj_dict[label]['classifier']:
+                    obj_dict[label]['classifier'].append(classifier)
+                    obj_dict[label]['classifier'].sort()
+                    
+            return obj_dict
+
 
 
 
