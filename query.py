@@ -15,7 +15,7 @@ class Query():
                 smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name, productions.part, objects.date, departments.name, classifiers.name FROM objects INNER JOIN productions ON productions.obj_id =  objects.id INNER JOIN agents ON productions.agt_id = agents.id"
                 # joining objects and departments, using objects_departments
                 smt_str += " INNER JOIN objects_departments ON objects_departments.obj_id = objects.id INNER JOIN departments ON departments.id = objects_departments.dep_id"
-                # # joining objects and classifiers, using objects_classifiers
+                # joining objects and classifiers, using objects_classifiers
                 smt_str += " INNER JOIN objects_classifiers ON objects_classifiers.obj_id = objects.id INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
 
                 # counting how many variables were not None 
@@ -56,12 +56,22 @@ class Query():
                 for key in obj_dict:
                     if len(rows_list) == 1000:
                         break
+
+                    #sort approriate key once
+                    obj_dict[key]['produced_by'].sort()
+                    obj_dict[key]['department'].sort()
+                    obj_dict[key]['classifier'].sort()
+
+                    #join appropiate strings together
+                    obj_dict[key]["produced_by"] = ", ".join(obj_dict[key]["produced_by"])
+                    obj_dict[key]["department"] = "\n".join(obj_dict[key]["department"])
+                    obj_dict[key]["classifier"] = "\n".join(obj_dict[key]["classifier"])
                     rows_list.append(list(obj_dict[key].values()))
 
                 search_count = len(rows_list)
-
                 print(f"Search produced {search_count} objects.")
                 print(Table(self.columns, rows_list))
+
 
     def clean_data(self, data):
         obj_dict = {}
@@ -87,13 +97,10 @@ class Query():
             else:
                 if agent_and_part not in obj_dict[id]['produced_by']:
                     obj_dict[id]['produced_by'].append(agent_and_part)
-                    obj_dict[id]['produced_by'].sort()
                 if department not in obj_dict[id]['department']:
                     obj_dict[id]['department'].append(department)
-                    obj_dict[id]['department'].sort()
                 if classifier not in obj_dict[id]['classifier']:
                     obj_dict[id]['classifier'].append(classifier)
-                    obj_dict[id]['classifier'].sort()
                     
         return obj_dict
 
