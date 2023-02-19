@@ -65,7 +65,7 @@ class Query():
                     #join appropiate strings together
                     obj_dict[key]["produced_by"] = ", ".join(obj_dict[key]["produced_by"])
                     obj_dict[key]["department"] = "\n".join(obj_dict[key]["department"])
-                    obj_dict[key]["classifier"] = "\n".join(obj_dict[key]["classifier"])
+                    obj_dict[key]["classifier"] = "\n \n".join(obj_dict[key]["classifier"])
                     rows_list.append(list(obj_dict[key].values()))
 
                 search_count = len(rows_list)
@@ -82,7 +82,7 @@ class Query():
             part_produced = row[3]
             date = row[4]
             department = row[5]
-            classifier = row[6]
+            classifier = row[6].lower()
             agent_and_part = f"{produced_by} ({part_produced})"
 
             if id not in obj_dict:
