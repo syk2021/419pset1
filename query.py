@@ -4,12 +4,39 @@ from sqlite3 import connect
 from table import Table
 
 class Query():  
-    def __init__(self, db_file) -> None:
-        self.db_file = db_file
-        self.columns = ["ID", "Label", "Produced By", "Date", "Member Of", "Classified As"]
+    """"Class to represent querying the database. 
+        Stores the database file for opening connection to later on.
+        Stores the columns for the output Table.
+    """
+    def __init__(self, db_file):
+        """Initalizes the class with the database file and the columns for the output table.
+
+        Args:
+            db_file (str): database file
+        """
+
+        self._db_file = db_file
+        self._columns = ["ID", "Label", "Produced By", "Date", "Member Of", "Classified As"]
 
     def search(self, dep=None, agt=None, classifier=None, label=None):
-        with connect(self.db_file, isolation_level=None, uri=True) as connection:
+        """Opens a connection to the database and uses the given argument to create a 
+        SQL statement that query the database satisfying the search criteria. 
+        Displays in the console a table of objects filtered by department, agent, classification, and title.
+
+        Args:
+            dep (str): selected department
+            agt (str): selected agent
+            classifer: selected slassifer
+            label: selected label
+
+        Arguments are by default None if not passed in.
+        If no arguments are apssed in output includes first 1000 objects in the database.
+
+        Sort Order:
+            Sorted first by object label/date, then by agent name/part, then by classifier, then by department name.
+        """
+
+        with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 # objects.id, objects.label, agents.name, objects.date, departments.name, classifiers.name
                 smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name, productions.part, objects.date, departments.name, classifiers.name FROM objects INNER JOIN productions ON productions.obj_id =  objects.id INNER JOIN agents ON productions.agt_id = agents.id"
@@ -24,6 +51,8 @@ class Query():
                 
                 if dep or agt or classifier or label:
                     smt_str += " WHERE"
+
+                #append to the stm_str, using prepared statements to filter objects out based on the given arguments if they exists
                 if dep:
                     smt_str += f" departments.name LIKE ?"
                     smt_params.append(f"%{dep}%")
@@ -48,33 +77,54 @@ class Query():
                     smt_params.append(f"%{label}%")
                 smt_str += " ORDER BY objects.label, objects.date, agents.name, productions.part, classifiers.name, departments.name"
 
+                #execute the statement and fetch the results
                 cursor.execute(smt_str, smt_params)
                 data = cursor.fetchall()
+
+                #clean the data
                 obj_dict = self.clean_data(data)
+        
+
                 rows_list = []
 
+                #loop through each obj in dictionary and convert the obj's dictionary to a list to fit the Table class requirements
                 for key in obj_dict:
+
+                    #no more than 1000 objects in output
                     if len(rows_list) == 1000:
                         break
 
-                    #sort approriate key once
+                    #sort approriate key in ascending order
                     obj_dict[key]['produced_by'].sort()
                     obj_dict[key]['department'].sort()
                     obj_dict[key]['classifier'].sort()
 
-                    #join appropiate strings together
+                    #join appropriate strings together
                     obj_dict[key]["produced_by"] = ", ".join(obj_dict[key]["produced_by"])
                     obj_dict[key]["department"] = "\n".join(obj_dict[key]["department"])
                     obj_dict[key]["classifier"] = "\n \n".join(obj_dict[key]["classifier"])
+
                     rows_list.append(list(obj_dict[key].values()))
 
+                #output to console in table format
                 search_count = len(rows_list)
                 print(f"Search produced {search_count} objects.")
-                print(Table(self.columns, rows_list))
+                print(Table(self._columns, rows_list))
 
 
     def clean_data(self, data):
+        """Creates a dictionary for each object with their relevant information (id, label, produced_by, date, department, classifers).
+        Stores them in a master dictionary (obj_dict) with their id as the key.
+
+        Args:
+            data (list): data returned from cursor.fetchall()
+        """
+        
+        #master dictionary
         obj_dict = {}
+
+
+        #loop through each row in the data, get the relevant data, and store them in the dictionary for the relevant object
         for row in data:
             id = str(row[0])
             label = row[1]
@@ -85,6 +135,8 @@ class Query():
             classifier = row[6].lower()
             agent_and_part = f"{produced_by} ({part_produced})"
 
+
+            #create a new dictionary for the object with the specified id if it's not in the master dictionary already
             if id not in obj_dict:
                 obj_dict[id] = {
                     "id" : id,
@@ -95,6 +147,7 @@ class Query():
                     "classifier": [classifier] 
                 }
             else:
+                #check whether each attributes is in the object's dictionary already, if not add it in
                 if agent_and_part not in obj_dict[id]['produced_by']:
                     obj_dict[id]['produced_by'].append(agent_and_part)
                 if department not in obj_dict[id]['department']:
