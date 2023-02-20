@@ -92,7 +92,7 @@ class Query():
         return [search_count, self._columns, obj_list]
 
     def format_data(self, obj_dict):
-        """Transform each object's dictionary into a list to fit the Table class requirements
+        """Transform each object's dictionary into a list to fit the Table class requirements.
 
         Args:
             obj_dict (dict): dictionary of all the objects
