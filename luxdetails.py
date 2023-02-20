@@ -23,7 +23,7 @@ class LuxDetailsCLI():
         self.parse_args()
 
         response = self._query.query_id(id=self._id)
-        self.output_results(response)
+        
 
 
     def output_results(self, response):
