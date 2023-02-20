@@ -22,8 +22,8 @@ class LuxDetailsCLI():
 
         self.parse_args()
 
-        response = self._query.query_id(id=self._id)
-        self.output_results(response)
+        # response = self._query.query_id(id=self._id)
+        # self.output_results(response)
 
 
     def output_results(self, response):
@@ -51,7 +51,7 @@ class LuxDetailsCLI():
                     prog = 'luxdetails.py', allow_abbrev=False)
         
 
-        parser.add_argument("-id", help="the id of the object whose details should be shown", metavar='id')
+        parser.add_argument("id", help="the id of the object whose details should be shown")
         
 
         args = parser.parse_args()
