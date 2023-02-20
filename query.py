@@ -5,9 +5,10 @@ from table import Table
 
 class Query():  
     """"Class to represent querying the database. 
-        Stores the database file for opening connection to later on.
-        Stores the columns for the output Table.
+    Stores the database file for opening connection to later on. 
+    Stores the columns for the output Table.
     """
+
     def __init__(self, db_file):
         """Initalizes the class with the database file and the columns for the output table.
 
@@ -18,10 +19,9 @@ class Query():
         self._db_file = db_file
         self._columns = ["ID", "Label", "Produced By", "Date", "Member Of", "Classified As"]
 
-    def search(self, dep=None, agt=None, classifier=None, label=None):
+    def query_filter(self, dep=None, agt=None, classifier=None, label=None):
         """Opens a connection to the database and uses the given argument to create a 
         SQL statement that query the database satisfying the search criteria. 
-        Displays in the console a table of objects filtered by department, agent, classification, and title.
 
         Args:
             dep (str): selected department
@@ -29,8 +29,11 @@ class Query():
             classifer: selected slassifer
             label: selected label
 
+        Return:
+            list: numbers of items returned from query (search count), columns for Table, a list of objects
+
         Arguments are by default None if not passed in.
-        If no arguments are apssed in output includes first 1000 objects in the database.
+        If no arguments are passed in output includes first 1000 objects in the database.
 
         Sort Order:
             Sorted first by object label/date, then by agent name/part, then by classifier, then by department name.
@@ -81,35 +84,45 @@ class Query():
                 cursor.execute(smt_str, smt_params)
                 data = cursor.fetchall()
 
-                #clean the data
-                obj_dict = self.clean_data(data)
+        #data formatting
+        obj_dict = self.clean_data(data)
+        obj_list = self.format_data(obj_dict)
+
+        search_count = len(obj_list)
+        return [search_count, self._columns, obj_list]
+
+    def format_data(self, obj_dict):
+        """Transform each object's dictionary into a list to fit the Table class requirements
+
+        Args:
+            obj_dict (dict): dictionary of all the objects
+
+        Returns:
+            rows_list (list): a list with each object as a list which is a "row" in the Table
+        """
+
+        rows_list = []
+
+        #loop through each obj in dictionary and convert the obj's dictionary to a list
+        for key in obj_dict:
+
+            #no more than 1000 objects in output
+            if len(rows_list) == 1000:
+                break
+
+            #sort approriate key in ascending order
+            obj_dict[key]['produced_by'].sort()
+            obj_dict[key]['department'].sort()
+            obj_dict[key]['classifier'].sort()
+
+            #join appropriate strings together
+            obj_dict[key]["produced_by"] = ", ".join(obj_dict[key]["produced_by"])
+            obj_dict[key]["department"] = "\n".join(obj_dict[key]["department"])
+            obj_dict[key]["classifier"] = "\n \n".join(obj_dict[key]["classifier"])
+
+            rows_list.append(list(obj_dict[key].values()))
         
-
-                rows_list = []
-
-                #loop through each obj in dictionary and convert the obj's dictionary to a list to fit the Table class requirements
-                for key in obj_dict:
-
-                    #no more than 1000 objects in output
-                    if len(rows_list) == 1000:
-                        break
-
-                    #sort approriate key in ascending order
-                    obj_dict[key]['produced_by'].sort()
-                    obj_dict[key]['department'].sort()
-                    obj_dict[key]['classifier'].sort()
-
-                    #join appropriate strings together
-                    obj_dict[key]["produced_by"] = ", ".join(obj_dict[key]["produced_by"])
-                    obj_dict[key]["department"] = "\n".join(obj_dict[key]["department"])
-                    obj_dict[key]["classifier"] = "\n \n".join(obj_dict[key]["classifier"])
-
-                    rows_list.append(list(obj_dict[key].values()))
-
-                #output to console in table format
-                search_count = len(rows_list)
-                print(f"Search produced {search_count} objects.")
-                print(Table(self._columns, rows_list))
+        return rows_list
 
 
     def clean_data(self, data):
@@ -118,6 +131,11 @@ class Query():
 
         Args:
             data (list): data returned from cursor.fetchall()
+
+        Returns:
+            obj_dict (dict): 
+                key: object's id
+                value: dictionary with all information relevant to the obhect
         """
         
         #master dictionary

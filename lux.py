@@ -12,10 +12,15 @@ class LuxCLI():
     Stores the a query class, and the inputted department, agent, classifers, and label.
     """
 
-    def __init__(self) -> None:
-        """Initalizes the CLI with the passed in arguments from the terminal and query the database with the args."""
+    def __init__(self, db_name) -> None:
+        """Initalizes the CLI with the passed in arguments from the terminal and create a query with the given database file.
+        Query the database with the args and output the results into Console.
 
-        self._query = Query(DB_NAME)
+        Args:
+            db_name (str): database file
+        """
+
+        self._query = Query(db_name)
         self._department = None
         self._agent = None
         self._classifier = None
@@ -23,7 +28,25 @@ class LuxCLI():
 
         self.parse_args()
 
-        self._query.search(dep=self._department, agt=self._agent, classifier=self._classifier, label=self._label)
+        response = self._query.query_filter(dep=self._department, agt=self._agent, classifier=self._classifier, label=self._label)
+        self.output_results(response)
+
+    
+    def output_results(self, response):
+        """Takes in the results from a database query and output and
+        displays in the console a table of objects filtered by department, agent, classification, and title.
+
+        Args:
+            response (list): [search_count, columns, obj_list] returned from db query
+        """
+
+        search_count = response[0]
+        columns = response[1]
+        obj_list = response[2]
+
+        print(f"Search produced {search_count} objects.")
+        print(Table(columns, obj_list, preformat_sep=""))
+
 
     def parse_args(self):
         """Uses ArgParse to parse the arguments inputted by the user and store it as instance variables.
@@ -52,8 +75,5 @@ class LuxCLI():
         self._label = args.l
 
         
-
-
-
 if __name__ == '__main__':
-    LuxCLI()
+    LuxCLI(DB_NAME)
