@@ -175,6 +175,14 @@ class Query():
                     
         return obj_dict
 
-
-
-
+    def query_id(self, id):
+        with connect(self._db_file, isolation_level=None, uri=True) as connection:
+            with closing(connection.cursor()) as cursor:
+                smt_str = "SELECT objects.label, productions.part, agents.name, nationalities.descriptor, agents.begin_date, agents.end_date FROM objects INNER JOIN productions ON productions.obj_id = objects.id INNER JOIN agents on productions.agt_id = agents.id"
+                smt_str += " INNER JOIN agents_nationalities ON agents_nationalities.agt_id = agents.id INNER JOIN nationalities ON nationalities.id = agents_nationalities.nat_id"
+                smt_str += " INNER JOIN objects_classifiers ON objects_classifiers.obj_id = objects.id INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
+                smt_str += f"  WHERE objects.id = {id}"
+                
+                cursor.execute(smt_str)
+                data = cursor.fetchall()
+                print(data)
