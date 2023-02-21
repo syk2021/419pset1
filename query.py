@@ -197,8 +197,8 @@ class LuxDetailsQuery(Query):
 
     def __init__(self, db_file):
         self._db_file = db_file
-        self._columns_agent = ["Part", "Name", "Nationality", "Timespan"]
-        self._columns_obj = ["Label", "Produced By", "Classification", "Information"]
+        self._columns_produced_by = ["Part", "Name", "nationalities", "Timespan"]
+        self._columns_information = ["Type", "Content"]
         self._format_str_agent = ["w", "w", "p", "w"]
 
     def search(self, id):
@@ -215,10 +215,28 @@ class LuxDetailsQuery(Query):
                 cursor.execute(smt_str)
                 data = cursor.fetchall()
                 agent_dict, obj_dict = self.clean_data(data)
-                rows_list = self.format_data_obj(obj_dict)
-
-                print(Table(self._columns_obj, rows_list))
-
+                obj_rows_list = self.format_data_obj(obj_dict)[0]
+                agent_rows_list = self.format_data(agent_dict)
+                print("----------------")
+                print("Label")
+                print("----------------")
+                print(obj_rows_list[0])
+                print("")
+                print("----------------")
+                print("Produced By")
+                print("----------------")
+                print(Table(self._columns_produced_by, agent_rows_list))
+                print("")
+                print("----------------")
+                print("Classification")
+                print("----------------")
+                print(obj_rows_list[1])
+                print("")
+                print("----------------")
+                print("Information")
+                print("----------------")
+                print(Table(self._columns_information, [obj_rows_list[2:]]))
+                print("")
 
     def format_data_obj(self, obj_dict):
         rows_list = []
