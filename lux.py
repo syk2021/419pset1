@@ -2,7 +2,7 @@ from sys import argv, stderr, exit
 from contextlib import closing
 from sqlite3 import connect
 from table import Table
-from query import Query
+from query import LuxQuery
 import argparse
 
 DB_NAME = "./lux.sqlite"
@@ -20,7 +20,7 @@ class LuxCLI():
             db_name (str): database file
         """
 
-        self._query = Query(db_name)
+        self._query = LuxQuery(db_name)
         self._department = None
         self._agent = None
         self._classifier = None
@@ -28,7 +28,7 @@ class LuxCLI():
 
         self.parse_args()
 
-        response = self._query.query_filter(dep=self._department, agt=self._agent, classifier=self._classifier, label=self._label)
+        response = self._query.search(dep=self._department, agt=self._agent, classifier=self._classifier, label=self._label)
         self.output_results(response)
 
     

@@ -3,7 +3,20 @@ from contextlib import closing
 from sqlite3 import connect
 from table import Table
 
-class Query():  
+class Query():
+    def __init__(self, db_file):
+        raise NotImplementedError
+    
+    def search():
+        raise NotImplementedError
+    
+    def clean_data():
+        raise NotImplementedError
+    
+    def format_data():
+        raise NotImplementedError
+    
+class LuxQuery(Query):  
     """"Class to represent querying the database. 
     Stores the database file for opening connection to later on. 
     Stores the columns for the output Table.
@@ -19,7 +32,7 @@ class Query():
         self._db_file = db_file
         self._columns = ["ID", "Label", "Produced By", "Date", "Member Of", "Classified As"]
 
-    def query_filter(self, dep=None, agt=None, classifier=None, label=None):
+    def search(self, dep=None, agt=None, classifier=None, label=None):
         """Opens a connection to the database and uses the given argument to create a 
         SQL statement that query the database satisfying the search criteria. 
 
@@ -91,7 +104,7 @@ class Query():
         search_count = len(obj_list)
         return [search_count, self._columns, obj_list]
 
-    def format_data_filter(self, obj_dict):
+    def format_data(self, obj_dict):
         """Transform each object's dictionary into a list to fit the Table class requirements.
 
         Args:
@@ -125,7 +138,7 @@ class Query():
         return rows_list
 
 
-    def clean_data_filter(self, data):
+    def clean_data(self, data):
         """Creates a dictionary for each object with their relevant information (id, label, produced_by, date, department, classifers).
         Stores them in a master dictionary (obj_dict) with their id as the key.
 
@@ -175,7 +188,20 @@ class Query():
                     
         return obj_dict
 
-    def query_id(self, id):
+
+class LuxDetailsQuery(Query):
+
+    def __init__(self, db_file):
+        """Initalizes the class with the database file and the columns for the output table.
+
+        Args:
+            db_file (str): database file
+        """
+
+        self._db_file = db_file
+        self._columns = ["ID", "Label", "Produced By", "Date", "Member Of", "Classified As"]
+
+    def search(self, id):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 smt_str = "SELECT objects.label, productions.part, agents.name, nationalities.descriptor, agents.begin_date, agents.end_date FROM objects INNER JOIN productions ON productions.obj_id = objects.id INNER JOIN agents on productions.agt_id = agents.id"
@@ -186,3 +212,4 @@ class Query():
                 cursor.execute(smt_str)
                 data = cursor.fetchall()
                 print(data)
+
