@@ -91,7 +91,7 @@ class Query():
         search_count = len(obj_list)
         return [search_count, self._columns, obj_list]
 
-    def format_data(self, obj_dict):
+    def format_data_filter(self, obj_dict):
         """Transform each object's dictionary into a list to fit the Table class requirements.
 
         Args:
@@ -125,7 +125,7 @@ class Query():
         return rows_list
 
 
-    def clean_data(self, data):
+    def clean_data_filter(self, data):
         """Creates a dictionary for each object with their relevant information (id, label, produced_by, date, department, classifers).
         Stores them in a master dictionary (obj_dict) with their id as the key.
 
