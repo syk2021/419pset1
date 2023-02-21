@@ -2,7 +2,7 @@ from sys import argv, stderr, exit
 from contextlib import closing
 from sqlite3 import connect
 from table import Table
-from query import Query
+from query import LuxDetailsQuery
 import argparse
 
 
@@ -17,11 +17,12 @@ class LuxDetailsCLI():
             db_name (str): database file
         """
 
-        self._query = Query(db_name)
+        self._query = LuxDetailsQuery(db_name)
         self._id = None
 
         self.parse_args()
 
+        response = self._query.search(self._id)
         # response = self._query.query_id(id=self._id)
         # self.output_results(response)
 
