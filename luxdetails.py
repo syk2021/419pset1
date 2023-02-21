@@ -61,3 +61,4 @@ class LuxDetailsCLI():
 
 if __name__ == '__main__':
     LuxDetailsCLI(DB_NAME)
+

@@ -37,15 +37,16 @@ class LuxCLI():
         displays in the console a table of objects filtered by department, agent, classification, and title.
 
         Args:
-            response (list): [search_count, columns, obj_list] returned from db query
+            response (list): [search_count, columns, format_str, obj_list] returned from db query
         """
 
         search_count = response[0]
         columns = response[1]
-        obj_list = response[2]
+        format_str = response[2]
+        obj_list = response[3]
 
         print(f"Search produced {search_count} objects.")
-        print(Table(columns, obj_list, preformat_sep=""))
+        print(Table(columns, obj_list, format_str=format_str))
 
 
     def parse_args(self):

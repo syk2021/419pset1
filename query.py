@@ -2,9 +2,12 @@ from sys import argv, stderr, exit
 from contextlib import closing
 from sqlite3 import connect
 from table import Table
+from datetime import datetime
 
 class Query():
-    def __init__(self, db_file):
+    """Abstract Query Class for querying databases. Query should be instantiated as LuxQuery or LuxDetailsQuery."""
+
+    def __init__(self):
         raise NotImplementedError
     
     def search():
@@ -23,7 +26,7 @@ class LuxQuery(Query):
     """
 
     def __init__(self, db_file):
-        """Initalizes the class with the database file and the columns for the output table.
+        """Initalizes the class with the database file and the columns and format_str for the output table.
 
         Args:
             db_file (str): database file
@@ -31,6 +34,7 @@ class LuxQuery(Query):
 
         self._db_file = db_file
         self._columns = ["ID", "Label", "Produced By", "Date", "Member Of", "Classified As"]
+        self._format_str=["w", "w", "w", "w", "w", "p"]
 
     def search(self, dep=None, agt=None, classifier=None, label=None):
         """Opens a connection to the database and uses the given argument to create a 
@@ -102,7 +106,7 @@ class LuxQuery(Query):
         obj_list = self.format_data(obj_dict)
 
         search_count = len(obj_list)
-        return [search_count, self._columns, obj_list]
+        return [search_count, self._columns, self._format_str, obj_list]
 
     def format_data(self, obj_dict):
         """Transform each object's dictionary into a list to fit the Table class requirements.
@@ -130,8 +134,8 @@ class LuxQuery(Query):
 
             #join appropriate strings together
             obj_dict[key]["produced_by"] = ", ".join(obj_dict[key]["produced_by"])
-            obj_dict[key]["department"] = "\n".join(obj_dict[key]["department"])
-            obj_dict[key]["classifier"] = "\n \n".join(obj_dict[key]["classifier"])
+            obj_dict[key]["department"] = ", ".join(obj_dict[key]["department"])
+            obj_dict[key]["classifier"] = "|".join(obj_dict[key]["classifier"])
 
             rows_list.append(list(obj_dict[key].values()))
         
@@ -192,24 +196,123 @@ class LuxQuery(Query):
 class LuxDetailsQuery(Query):
 
     def __init__(self, db_file):
-        """Initalizes the class with the database file and the columns for the output table.
-
-        Args:
-            db_file (str): database file
-        """
-
         self._db_file = db_file
-        self._columns = ["ID", "Label", "Produced By", "Date", "Member Of", "Classified As"]
+        self._columns_agent = ["Part", "Name", "Nationality", "Timespan"]
+        self._columns_obj = ["Label", "Produced By", "Classification", "Information"]
+        self._format_str_agent = ["w", "w", "p", "w"]
 
     def search(self, id):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
-                smt_str = "SELECT objects.label, productions.part, agents.name, nationalities.descriptor, agents.begin_date, agents.end_date FROM objects INNER JOIN productions ON productions.obj_id = objects.id INNER JOIN agents on productions.agt_id = agents.id"
+                smt_str = "SELECT DISTINCT objects.label, productions.part, agents.name, nationalities.descriptor, agents.begin_date, agents.end_date, classifiers.name, \"references\".type, \"references\".content, agents.id"
+                smt_str += " FROM objects INNER JOIN productions ON productions.obj_id = objects.id INNER JOIN agents on productions.agt_id = agents.id"
                 smt_str += " INNER JOIN agents_nationalities ON agents_nationalities.agt_id = agents.id INNER JOIN nationalities ON nationalities.id = agents_nationalities.nat_id"
+                smt_str += " INNER JOIN \"references\" ON \"references\".obj_id = objects.id"
                 smt_str += " INNER JOIN objects_classifiers ON objects_classifiers.obj_id = objects.id INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
-                smt_str += f"  WHERE objects.id = {id}"
+                
+                smt_str += f" WHERE objects.id = {id}"
                 
                 cursor.execute(smt_str)
                 data = cursor.fetchall()
-                print(data)
+                agent_dict, obj_dict = self.clean_data(data)
+                rows_list = self.format_data_obj(obj_dict)
 
+                print(Table(self._columns_obj, rows_list))
+
+
+    def format_data_obj(self, obj_dict):
+        rows_list = []
+        #loop through each obj in dictionary and convert the obj's dictionary to a list
+        for key in obj_dict:
+
+            #no more than 1000 objects in output
+            if len(rows_list) == 1000:
+                break
+
+            #join appropriate strings together
+            obj_dict[key]["classifier"] = ", ".join(obj_dict[key]["classifier"])
+            rows_list.append(list(obj_dict[key].values()))
+        
+        return rows_list
+    
+
+    def format_data(self, obj_dict):
+        rows_list = []
+
+        #loop through each obj in dictionary and convert the obj's dictionary to a list
+        for key in obj_dict:
+
+            #no more than 1000 objects in output
+            if len(rows_list) == 1000:
+                break
+
+            #join appropriate strings together
+            obj_dict[key]["nationality"] = "|".join(obj_dict[key]["nationality"])
+            rows_list.append(list(obj_dict[key].values()))
+        
+        return rows_list
+
+
+    
+    def clean_data(self, data):
+        #master dictionary
+        agent_dict = {}
+        obj_dict = {}
+
+
+        #loop through each row in the data, get the relevant data, and store them in the dictionary for the relevant object
+        for row in data:
+            label = row[0]
+            part_produced = row[1]
+            produced_by = row[2]
+            nationality = row[3]
+            begin_date = row[4]
+            end_date = row[5]
+            classifier = row[6]
+            ref_type = row[7]
+            ref_content = row[8]
+            agent_id = row[9]
+
+            timespan = self.parse_date(begin_date, end_date)
+
+            if label not in obj_dict:
+                obj_dict[label] =  {
+                    "label" : label,
+                    "classifier" : [classifier],
+                    "ref_type": ref_type,
+                    "ref_content": ref_content
+                }
+            else:
+                if classifier not in obj_dict[label]["classifier"]:
+                    obj_dict[label]['classifier'].append(classifier)
+
+            if agent_id not in agent_dict:
+                agent_dict[agent_id] = {
+                    "part": part_produced,
+                    "name": produced_by,
+                    "nationality": [nationality],
+                    "timespan": timespan
+                }
+            else:
+                if nationality not in agent_dict[agent_id]['nationality']:
+                    agent_dict[agent_id]['nationality'].append(nationality)
+
+        return agent_dict, obj_dict
+
+    def parse_date(self, begin_date, end_date):
+
+        if not begin_date and not end_date:
+            return "N/A"
+        
+        begin_year = ""
+        end_year = ""
+
+        if begin_date:
+            begin_date_dt = datetime.strptime(begin_date, '%Y-%m-%d')
+            begin_year = begin_date_dt.year
+
+        if end_date:
+            end_date_dt = datetime.strptime(begin_date, '%Y-%m-%d')
+            end_year = end_date_dt.year
+
+        return f"{begin_year}-{end_year}"
