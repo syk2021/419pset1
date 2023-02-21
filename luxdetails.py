@@ -24,7 +24,7 @@ class LuxDetailsCLI():
 
         response = self._query.search(self._id)
         # response = self._query.query_id(id=self._id)
-        # self.output_results(response)
+        self.output_results(response)
 
 
     def output_results(self, response):
@@ -35,12 +35,34 @@ class LuxDetailsCLI():
             response (list): [search_count, columns, obj_list] returned from db query
         """
 
-        search_count = response[0]
-        columns = response[1]
-        obj_list = response[2]
+        columns_produced_by = response[0]
+        columns_information = response[1]
+        agent_rows_list = response[2]
+        obj_dict = response[3]
 
-        print(f"Search produced {search_count} objects.")
-        print(Table(columns, obj_list, preformat_sep=""))
+        divider = "----------------"
+        res = ""
+
+        print("----------------")
+        print("Label")
+        print("----------------")
+        print(obj_dict['label'])
+        print("")
+        print("----------------")
+        print("Produced By")
+        print("----------------")
+        print(Table(columns_produced_by, agent_rows_list))
+        print("")
+        print("----------------")
+        print("Classification")
+        print("----------------")
+        print(", ".join(obj_dict['classifier']))
+        print("")
+        print("----------------")
+        print("Information")
+        print("----------------")
+        print(Table(columns_information, [[obj_dict['ref_type'], obj_dict['ref_content']]]))
+        print("")
 
     def parse_args(self):
         """Uses ArgParse to parse the arguments inputted by the user and store it as instance variables.

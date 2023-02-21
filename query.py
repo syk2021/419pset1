@@ -197,7 +197,7 @@ class LuxDetailsQuery(Query):
 
     def __init__(self, db_file):
         self._db_file = db_file
-        self._columns_produced_by = ["Part", "Name", "nationalities", "Timespan"]
+        self._columns_produced_by = ["Part", "Name", "Nationalities", "Timespan"]
         self._columns_information = ["Type", "Content"]
         self._format_str_agent = ["w", "w", "p", "w"]
 
@@ -209,51 +209,35 @@ class LuxDetailsQuery(Query):
                 smt_str += " INNER JOIN agents_nationalities ON agents_nationalities.agt_id = agents.id INNER JOIN nationalities ON nationalities.id = agents_nationalities.nat_id"
                 smt_str += " INNER JOIN \"references\" ON \"references\".obj_id = objects.id"
                 smt_str += " INNER JOIN objects_classifiers ON objects_classifiers.obj_id = objects.id INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
-                
                 smt_str += f" WHERE objects.id = {id}"
                 
                 cursor.execute(smt_str)
                 data = cursor.fetchall()
                 agent_dict, obj_dict = self.clean_data(data)
-                obj_rows_list = self.format_data_obj(obj_dict)[0]
                 agent_rows_list = self.format_data(agent_dict)
-                print("----------------")
-                print("Label")
-                print("----------------")
-                print(obj_rows_list[0])
-                print("")
-                print("----------------")
-                print("Produced By")
-                print("----------------")
-                print(Table(self._columns_produced_by, agent_rows_list))
-                print("")
-                print("----------------")
-                print("Classification")
-                print("----------------")
-                print(obj_rows_list[1])
-                print("")
-                print("----------------")
-                print("Information")
-                print("----------------")
-                print(Table(self._columns_information, [obj_rows_list[2:]]))
-                print("")
 
-    def format_data_obj(self, obj_dict):
-        rows_list = []
-        #loop through each obj in dictionary and convert the obj's dictionary to a list
-        for key in obj_dict:
-
-            #no more than 1000 objects in output
-            if len(rows_list) == 1000:
-                break
-
-            #join appropriate strings together
-            obj_dict[key]["classifier"] = ", ".join(obj_dict[key]["classifier"])
-            rows_list.append(list(obj_dict[key].values()))
-        
-        return rows_list
+                # print("----------------")
+                # print("Label")
+                # print("----------------")
+                # print(obj_dict['label'])
+                # print("")
+                # print("----------------")
+                # print("Produced By")
+                # print("----------------")
+                # print(Table(self._columns_produced_by, agent_rows_list))
+                # print("")
+                # print("----------------")
+                # print("Classification")
+                # print("----------------")
+                # print(", ".join(obj_dict['classifier']))
+                # print("")
+                # print("----------------")
+                # print("Information")
+                # print("----------------")
+                # print(Table(self._columns_information, [[obj_dict['ref_type'], obj_dict['ref_content']]]))
+                # print("")
+                return [self._columns_produced_by, self._columns_information, agent_rows_list, obj_dict]
     
-
     def format_data(self, obj_dict):
         rows_list = []
 
@@ -293,16 +277,16 @@ class LuxDetailsQuery(Query):
 
             timespan = self.parse_date(begin_date, end_date)
 
-            if label not in obj_dict:
-                obj_dict[label] =  {
+            if not obj_dict:
+                obj_dict =  {
                     "label" : label,
                     "classifier" : [classifier],
                     "ref_type": ref_type,
                     "ref_content": ref_content
                 }
             else:
-                if classifier not in obj_dict[label]["classifier"]:
-                    obj_dict[label]['classifier'].append(classifier)
+                if classifier not in obj_dict["classifier"]:
+                    obj_dict['classifier'].append(classifier)
 
             if agent_id not in agent_dict:
                 agent_dict[agent_id] = {
@@ -320,7 +304,7 @@ class LuxDetailsQuery(Query):
     def parse_date(self, begin_date, end_date):
 
         if not begin_date and not end_date:
-            return "N/A"
+            return ""
         
         begin_year = ""
         end_year = ""
