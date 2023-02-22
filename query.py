@@ -227,7 +227,6 @@ class LuxDetailsQuery(Query):
                 data = cursor.fetchall()
                 if not data:
                     raise NoSearchResultsError
-
         # data formatting
         agent_dict, obj_dict = self.clean_data(data)
         agent_rows_list = self.format_data(agent_dict)
@@ -256,7 +255,7 @@ class LuxDetailsQuery(Query):
             #join appropriate strings together
             obj_dict[key]["nationality"] = "|".join(obj_dict[key]["nationality"])
             rows_list.append(list(obj_dict[key].values()))
-        
+            
         return rows_list
     
     def clean_data(self, data):
@@ -300,13 +299,17 @@ class LuxDetailsQuery(Query):
                 obj_dict =  {
                     "label" : label,
                     "classifier" : [classifier],
-                    "ref_type": ref_type,
-                    "ref_content": ref_content
+                    "ref_type": [ref_type],
+                    "ref_content": [ref_content]
                 }
             # if dictionary has already been created, then we append classifiers
             else:
                 if classifier not in obj_dict["classifier"]:
                     obj_dict['classifier'].append(classifier)
+                if ref_type not in obj_dict['ref_type']:
+                    obj_dict['ref_type'].append(ref_type)
+                if ref_content not in obj_dict['ref_content']:
+                    obj_dict['ref_content'].append(ref_content)
 
             # if agent has not been stored in agent_dict yet
             if agent_id not in agent_dict:
