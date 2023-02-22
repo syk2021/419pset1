@@ -9,27 +9,27 @@ class Query():
     """Abstract Query Class for querying databases. 
     Query should be instantiated as LuxQuery or LuxDetailsQuery.
     """
-
     def __init__(self):
         raise NotImplementedError
-    
+
     def search():
         raise NotImplementedError
-    
+
     def clean_data():
         raise NotImplementedError
-    
+
     def format_data():
         raise NotImplementedError
-    
-class LuxQuery(Query):  
+
+class LuxQuery(Query):
     """"Class to represent querying the database. 
     Stores the database file for opening connection to later on. 
     Stores the columns for the output table.
     """
 
     def __init__(self, db_file):
-        """Initalizes the class with the database file and the columns and format_str for the output table.
+        """Initalizes the class with the database file and 
+        the columns and format_str for the output table.
 
         Args:
             db_file (str): database file
@@ -50,31 +50,42 @@ class LuxQuery(Query):
             label: selected label
 
         Return:
-            list: numbers of items returned from query (search count), columns for Table, a list of objects
+            list: numbers of items returned from query (search count), 
+            columns for Table, a list of objects
 
         Arguments are by default None if not passed in.
         If no arguments are passed in output includes first 1000 objects in the database.
 
         Sort Order:
-            Sorted first by object label/date, then by agent name/part, then by classifier, then by department name.
+            Sorted first by object label/date, then by agent name/part, 
+            then by classifier, then by department name.
         """
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
-                # objects.id, objects.label, agents.name, objects.date, departments.name, classifiers.name
-                smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name, productions.part, objects.date, departments.name, classifiers.name FROM objects INNER JOIN productions ON productions.obj_id =  objects.id INNER JOIN agents ON productions.agt_id = agents.id"
+                # objects.id, objects.label, agents.name, objects.date,
+                # departments.name, classifiers.name
+                smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name,"
+                smt_str += " productions.part, objects.date, departments.name, classifiers.name"
+                smt_str += " FROM objects INNER JOIN productions ON productions.obj_id = objects.id"
+                smt_str += " INNER JOIN agents ON productions.agt_id = agents.id"
                 # joining objects and departments, using objects_departments
-                smt_str += " INNER JOIN objects_departments ON objects_departments.obj_id = objects.id INNER JOIN departments ON departments.id = objects_departments.dep_id"
+                smt_str += " INNER JOIN objects_departments ON"
+                smt_str += " objects_departments.obj_id = objects.id"
+                smt_str += " INNER JOIN departments ON departments.id = objects_departments.dep_id"
                 # joining objects and classifiers, using objects_classifiers
-                smt_str += " INNER JOIN objects_classifiers ON objects_classifiers.obj_id = objects.id INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
+                smt_str += " INNER JOIN objects_classifiers"
+                smt_str += " ON objects_classifiers.obj_id = objects.id"
+                smt_str += " INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
 
-                # counting how many variables were not None 
+                # counting how many variables were not None
                 smt_count = 0
                 smt_params = []
-                
+
                 if dep or agt or classifier or label:
                     smt_str += " WHERE"
 
-                #append to the stm_str, using prepared statements to filter objects out based on the given arguments if they exists
+                #append to the stm_str, using prepared statements to
+                # filter objects out based on the given arguments if they exists
                 if dep:
                     smt_str += f" departments.name LIKE ?"
                     smt_params.append(f"%{dep}%")
@@ -97,20 +108,19 @@ class LuxQuery(Query):
                     smt_str += f" objects.label LIKE ?"
                     smt_count += 1
                     smt_params.append(f"%{label}%")
-                smt_str += " ORDER BY objects.label, objects.date, agents.name, productions.part, classifiers.name, departments.name"
+                smt_str += " ORDER BY objects.label, objects.date, agents.name,"
+                smt_str += " productions.part, classifiers.name, departments.name"
 
                 #execute the statement and fetch the results
                 cursor.execute(smt_str, smt_params)
                 data = cursor.fetchall()
-        
+
         #data formatting
         obj_dict = self.clean_data(data)
         obj_list = self.format_data(obj_dict)
 
         search_count = len(obj_list)
         return [search_count, self._columns, self._format_str, obj_list]
-    
-
 
     def format_data(self, obj_dict):
         """Transform each object's dictionary into a list to fit the Table class requirements.
@@ -142,12 +152,11 @@ class LuxQuery(Query):
             obj_dict[key]["classifier"] = "|".join(obj_dict[key]["classifier"])
 
             rows_list.append(list(obj_dict[key].values()))
-        
         return rows_list
 
-
     def clean_data(self, data):
-        """Creates a dictionary for each object with their relevant information (id, label, produced_by, date, department, classifers).
+        """Creates a dictionary for each object with their relevant information 
+        (id, label, produced_by, date, department, classifers).
         Stores them in a master dictionary (obj_dict) with their id as the key.
 
         Args:
@@ -158,13 +167,14 @@ class LuxQuery(Query):
                 key: object's id
                 value: dictionary with all information relevant to the obhect
         """
-        
+
         #master dictionary
         obj_dict = {}
 
-        #loop through each row in the data, get the relevant data, and store them in the dictionary for the relevant object
+        #loop through each row in the data, get the relevant data,
+        # and store them in the dictionary for the relevant object
         for row in data:
-            id = str(row[0])
+            obj_id = str(row[0])
             label = row[1]
             produced_by = row[2]
             part_produced = row[3]
@@ -173,11 +183,11 @@ class LuxQuery(Query):
             classifier = row[6].lower()
             agent_and_part = f"{produced_by} ({part_produced})"
 
-
-            #create a new dictionary for the object with the specified id if it's not in the master dictionary already
-            if id not in obj_dict:
-                obj_dict[id] = {
-                    "id" : id,
+            #create a new dictionary for the object with the specified id
+            # if it's not in the master dictionary already
+            if obj_id not in obj_dict:
+                obj_dict[obj_id] = {
+                    "id" : obj_id,
                     "label" : label,
                     "produced_by" : [agent_and_part],
                     "date" : date,
@@ -185,16 +195,16 @@ class LuxQuery(Query):
                     "classifier": [classifier] 
                 }
             else:
-                #check whether each attributes is in the object's dictionary already, if not add it in
-                if agent_and_part not in obj_dict[id]['produced_by']:
-                    obj_dict[id]['produced_by'].append(agent_and_part)
-                if department not in obj_dict[id]['department']:
-                    obj_dict[id]['department'].append(department)
-                if classifier not in obj_dict[id]['classifier']:
-                    obj_dict[id]['classifier'].append(classifier)
-                    
-        return obj_dict
+                #check whether each attributes is in
+                # the object's dictionary already, if not add it in
+                if agent_and_part not in obj_dict[obj_id]['produced_by']:
+                    obj_dict[obj_id]['produced_by'].append(agent_and_part)
+                if department not in obj_dict[obj_id]['department']:
+                    obj_dict[obj_id]['department'].append(department)
+                if classifier not in obj_dict[obj_id]['classifier']:
+                    obj_dict[obj_id]['classifier'].append(classifier)
 
+        return obj_dict
 
 class LuxDetailsQuery(Query):
     """"Class to represent querying the database. 
@@ -212,16 +222,26 @@ class LuxDetailsQuery(Query):
     def search(self, id):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
-                # objects.label, productions.part, agents.name, nationalities.descriptor, agents.begin_date, agents.end_date, classifiers.name
-                smt_str = "SELECT DISTINCT objects.label, productions.part, agents.name, nationalities.descriptor, agents.begin_date, agents.end_date, classifiers.name, \"references\".type, \"references\".content, agents.id"
+                # objects.label, productions.part, agents.name, nationalities.descriptor,
+                # agents.begin_date, agents.end_date, classifiers.name
+                smt_str = "SELECT DISTINCT objects.label, productions.part, agents.name,"
+                smt_str += " nationalities.descriptor, agents.begin_date,"
+                smt_str += " agents.end_date, classifiers.name,"
+                smt_str += " \"references\".type, \"references\".content, agents.id"
                 # joining objects and agents using productions
-                smt_str += " FROM objects INNER JOIN productions ON productions.obj_id = objects.id INNER JOIN agents on productions.agt_id = agents.id"
+                smt_str += " FROM objects INNER JOIN productions ON productions.obj_id = objects.id"
+                smt_str += " INNER JOIN agents on productions.agt_id = agents.id"
                 # joining nationalities using agents_nationalities
-                smt_str += " INNER JOIN agents_nationalities ON agents_nationalities.agt_id = agents.id INNER JOIN nationalities ON nationalities.id = agents_nationalities.nat_id"
+                smt_str += " INNER JOIN agents_nationalities"
+                smt_str += " ON agents_nationalities.agt_id = agents.id"
+                smt_str += " INNER JOIN nationalities ON"
+                smt_str += " nationalities.id = agents_nationalities.nat_id"
                 # joining references
                 smt_str += " INNER JOIN \"references\" ON \"references\".obj_id = objects.id"
                 # joining classifiers using objects_classifiers
-                smt_str += " INNER JOIN objects_classifiers ON objects_classifiers.obj_id = objects.id INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
+                smt_str += " INNER JOIN objects_classifiers ON"
+                smt_str += " objects_classifiers.obj_id = objects.id"
+                smt_str += " INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
                 smt_str += f" WHERE objects.id = ?"
                 smt_params = [id]
 
@@ -234,8 +254,9 @@ class LuxDetailsQuery(Query):
         agent_dict, obj_dict = self.clean_data(data)
         agent_rows_list = self.format_data(agent_dict)
 
-        return [self._columns_produced_by, self._columns_information, self._format_str_information, self._format_str_produced, agent_rows_list, obj_dict]
-    
+        return [self._columns_produced_by, self._columns_information,
+                self._format_str_information, self._format_str_produced, agent_rows_list, obj_dict]
+
     def format_data(self, obj_dict):
         """Transform each object's dictionary into a list to fit the Table class requirements.
 
@@ -258,12 +279,13 @@ class LuxDetailsQuery(Query):
             #join appropriate strings together
             obj_dict[key]["nationality"] = "|".join(obj_dict[key]["nationality"])
             rows_list.append(list(obj_dict[key].values()))
-            
+
         return rows_list
-    
+
     def clean_data(self, data):
         """Creates dictionaries for the object queried and the agents associated with that object 
-        with their relevant information (label, part_produced, produced_by, nationality, begin_date, end_date,
+        with their relevant information 
+        (label, part_produced, produced_by, nationality, begin_date, end_date,
         classifier, ref_type, ref_content, agent_id).
         Stores them in master dictionaries (obj_dict, agent_dict). agent_dict has agent's id as key. 
 
@@ -282,7 +304,8 @@ class LuxDetailsQuery(Query):
         agent_dict = {}
         obj_dict = {}
 
-        #loop through each row in the data, get the relevant data, and store them in the dictionary for the relevant object
+        #loop through each row in the data, get the relevant data,
+        # and store them in the dictionary for the relevant object
         for row in data:
             label = row[0]
             part_produced = row[1]
@@ -329,8 +352,6 @@ class LuxDetailsQuery(Query):
 
         return agent_dict, obj_dict
 
-    
-    
     def parse_date(self, begin_date, end_date):
         """Given a begin_date (str) and end_date (str)
         formats the timespan needed for table in the form of {begin_year}-{end_year}.
@@ -338,7 +359,7 @@ class LuxDetailsQuery(Query):
 
         if not begin_date and not end_date:
             return ""
-        
+
         begin_year = ""
         end_year = ""
 
