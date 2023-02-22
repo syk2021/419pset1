@@ -1,9 +1,8 @@
-from sys import argv, stderr, exit
-from contextlib import closing
-from sqlite3 import connect
+import argparse
+
 from table import Table
 from query import LuxDetailsQuery
-import argparse
+
 
 
 DB_NAME = "./lux.sqlite"
