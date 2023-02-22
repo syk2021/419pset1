@@ -6,7 +6,7 @@ class NoSearchResultsError(Exception):
     pass
 
 class Query():
-    """Abstract Query Class for querying databases. 
+    """Abstract Query Class for querying databases.
     Query should be instantiated as LuxQuery or LuxDetailsQuery.
     """
     def __init__(self):
@@ -22,13 +22,13 @@ class Query():
         raise NotImplementedError
 
 class LuxQuery(Query):
-    """"Class to represent querying the database. 
-    Stores the database file for opening connection to later on. 
+    """"Class to represent querying the database.
+    Stores the database file for opening connection to later on.
     Stores the columns for the output table.
     """
 
     def __init__(self, db_file):
-        """Initalizes the class with the database file and 
+        """Initalizes the class with the database file and
         the columns and format_str for the output table.
 
         Args:
@@ -40,8 +40,8 @@ class LuxQuery(Query):
         self._format_str=["w", "w", "w", "w", "w", "p"]
 
     def search(self, dep=None, agt=None, classifier=None, label=None):
-        """Opens a connection to the database and uses the given argument to create a 
-        SQL statement that query the database satisfying the search criteria. 
+        """Opens a connection to the database and uses the given argument to create a
+        SQL statement that query the database satisfying the search criteria.
 
         Args:
             dep (str): selected department
@@ -50,14 +50,14 @@ class LuxQuery(Query):
             label: selected label
 
         Return:
-            list: numbers of items returned from query (search count), 
+            list: numbers of items returned from query (search count),
             columns for Table, a list of objects
 
         Arguments are by default None if not passed in.
         If no arguments are passed in output includes first 1000 objects in the database.
 
         Sort Order:
-            Sorted first by object label/date, then by agent name/part, 
+            Sorted first by object label/date, then by agent name/part,
             then by classifier, then by department name.
         """
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
@@ -132,6 +132,7 @@ class LuxQuery(Query):
                             common_ids &= value
                 common_ids = list(common_ids)
 
+                #final query to get all objects
                 final_query = "SELECT objects.id, objects.label, agents.name,"
                 final_query += " productions.part, objects.date, departments.name, classifiers.name"
                 # join productions table
@@ -155,6 +156,7 @@ class LuxQuery(Query):
                 final_query += "("
                 final_query += ", ".join(str(x) for x in common_ids)
                 final_query += ")"
+
                 cursor.execute(final_query)
                 final_data = cursor.fetchall()
 
@@ -165,8 +167,36 @@ class LuxQuery(Query):
         search_count = len(obj_list)
         return [search_count, self._columns, self._format_str, obj_list]
 
+    def create_subqueries(self, smt_str, subquery_key, subquery_variable):
+        """Creating subqueries for classifier, department, agent, and label search.
+
+        Args:
+            smt_str (str): statement string
+            subquery_key (str): department, agent, classifier, label
+            subquery_variable (str): argument passed in from CLI to match respective key
+        """
+
+        subquery_dict = {"classifier": "classifiers.name", "dep": "departments.name",
+                         "agt": "agents.name", "label": "objects.label"}
+        subquery_smt = smt_str
+        subquery_params = []
+        # WHERE classifiers.name LIKE ?
+        subquery_smt += " WHERE "
+        subquery_smt += subquery_dict[subquery_key]
+        subquery_smt += " LIKE ?"
+        subquery_params.append(f"%{subquery_variable}%")
+        return subquery_smt, subquery_params
+
     def parse_data(self, data):
-        "Given data from SQL query, add it into a set."
+        """Given data from SQL query, add it into a set.
+
+        Args:
+            data (list): data returned from SQL query
+
+        Return:
+            set: set of ids
+        """
+
         id_set = set()
         for entry in data:
             id_set.add(entry[0])
@@ -204,21 +234,8 @@ class LuxQuery(Query):
             rows_list.append(list(data[key].values()))
         return rows_list
 
-    def create_subqueries(self, smt_str, subquery_key, subquery_variable):
-        "Creating subqueries for classifier, department, agent, and label search."
-        subquery_dict = {"classifier": "classifiers.name", "dep": "departments.name",
-                         "agt": "agents.name", "label": "objects.label"}
-        subquery_smt = smt_str
-        subquery_params = []
-        # WHERE classifiers.name LIKE ?
-        subquery_smt += " WHERE "
-        subquery_smt += subquery_dict[subquery_key]
-        subquery_smt += " LIKE ?"
-        subquery_params.append(f"%{subquery_variable}%")
-        return subquery_smt, subquery_params
-
     def clean_data(self, data):
-        """Creates a dictionary for each object with their relevant information 
+        """Creates a dictionary for each object with their relevant information
         (id, label, produced_by, date, department, classifers).
         Stores them in a master dictionary (obj_dict) with their id as the key.
 
@@ -226,7 +243,7 @@ class LuxQuery(Query):
             data (list): data returned from cursor.fetchall()
 
         Returns:
-            obj_dict (dict): 
+            obj_dict (dict):
                 key: object's id
                 value: dictionary with all information relevant to the obhect
         """
@@ -255,7 +272,7 @@ class LuxQuery(Query):
                     "produced_by" : [agent_and_part],
                     "date" : date,
                     "department": [department],
-                    "classifier": [classifier] 
+                    "classifier": [classifier]
                 }
             else:
                 #check whether each attributes is in
@@ -270,8 +287,8 @@ class LuxQuery(Query):
         return obj_dict
 
 class LuxDetailsQuery(Query):
-    """"Class to represent querying the database. 
-    Stores the database file for opening connection to later on. 
+    """"Class to represent querying the database.
+    Stores the database file for opening connection to later on.
     Stores the columns for the output table.
     """
 
@@ -346,11 +363,11 @@ class LuxDetailsQuery(Query):
         return rows_list
 
     def clean_data(self, data):
-        """Creates dictionaries for the object queried and the agents associated with that object 
-        with their relevant information 
+        """Creates dictionaries for the object queried and the agents associated with that object
+        with their relevant information
         (label, part_produced, produced_by, nationality, begin_date, end_date,
         classifier, ref_type, ref_content, agent_id).
-        Stores them in master dictionaries (obj_dict, agent_dict). agent_dict has agent's id as key. 
+        Stores them in master dictionaries (obj_dict, agent_dict). agent_dict has agent's id as key.
 
         Args:
             data (list): data returned from cursor.fetchall()
@@ -359,7 +376,7 @@ class LuxDetailsQuery(Query):
             agent_dict (dict):
                 key: agent's id
                 value: dictionary with all information relevant to the agent
-            obj_dict (dict): 
+            obj_dict (dict):
                 value: dictionary with all information relevant to the obhect
         """
 
