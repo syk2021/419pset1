@@ -29,10 +29,10 @@ class LuxDetailsCLI():
 
     def output_results(self, response):
         """Takes in the results from a database query and output and
-        displays in the console a table of objects filtered by department, agent, classification, and title.
+        displays in the console a the label, information about agent (part, name, nationalities, timespan), classification, and information.
 
         Args:
-            response (list): [search_count, columns, obj_list] returned from db query
+            response (list): [columns_produced_by, columns_information, agent_rows_list, obj_dict] returned from db query
         """
 
         columns_produced_by = response[0]
@@ -40,29 +40,35 @@ class LuxDetailsCLI():
         agent_rows_list = response[2]
         obj_dict = response[3]
 
-        divider = "----------------"
-        res = ""
+        divider = "----------------\n"
+        space = "\n"
+        res = "\n"
 
-        print("----------------")
-        print("Label")
-        print("----------------")
-        print(obj_dict['label'])
-        print("")
-        print("----------------")
-        print("Produced By")
-        print("----------------")
-        print(Table(columns_produced_by, agent_rows_list))
-        print("")
-        print("----------------")
-        print("Classification")
-        print("----------------")
-        print(", ".join(obj_dict['classifier']))
-        print("")
-        print("----------------")
-        print("Information")
-        print("----------------")
-        print(Table(columns_information, [[obj_dict['ref_type'], obj_dict['ref_content']]]))
-        print("")
+        res += divider
+        res += "Label\n"
+        res += divider
+        res += obj_dict['label'] + space
+        res += space
+
+        res += divider
+        res += "Produced\n"
+        res += divider
+        res += str(Table(columns_produced_by, agent_rows_list)) + space
+        res += space
+        res += divider
+
+        res += divider
+        res += "Classification\n" 
+        res += divider
+        res += ", ".join(obj_dict['classifier']) + space
+        res += space
+
+        res += divider
+        res += "Information\n"
+        res += divider
+        res += str(Table(columns_information, [[obj_dict['ref_type'], obj_dict['ref_content']]])) + space
+        res += space
+        print(res, end="")
 
     def parse_args(self):
         """Uses ArgParse to parse the arguments inputted by the user and store it as instance variables.
