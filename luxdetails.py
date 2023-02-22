@@ -9,7 +9,8 @@ DB_NAME = "./lux.sqlite"
 
 class LuxDetailsCLI():
     def __init__(self, db_name):
-        """Initalizes the CLI with the id given be the user and create a query with the given database file.
+        """Initalizes the CLI with the id given be the user
+        and create a query with the given database file.
         Query the database with based on the given id and output the results into Console.
 
         Args:
@@ -23,22 +24,25 @@ class LuxDetailsCLI():
 
         try:
             response = self._query.search(self._id)
-        except sqlite3.Error as er:
-            print(er, file=sys.stderr)
-            exit(1)
+        except sqlite3.Error as err:
+            print(err, file=sys.stderr)
+            sys.exit()
         except NoSearchResultsError:
             print("Invalid id.")
-            exit(1)
+            sys.exit()
 
         self.output_results(response)
 
 
     def output_results(self, response):
-        """Takes in the results from a database query and output and
-        displays in the console a the label, information about agent (part, name, nationalities, timespan), classification, and information.
+        """Takes in the results from a database query
+        and output and displays in the console a the label
+        information about agent (part, name, nationalities, timespan)
+        classification, and information.
 
         Args:
-            response (list): [columns_produced_by, columns_information, agent_rows_list, obj_dict] returned from db query
+            response (list): [columns_produced_by, columns_information, agent_rows_list, obj_dict]
+            returned from db query
         """
 
         columns_produced_by = response[0]
@@ -65,7 +69,7 @@ class LuxDetailsCLI():
         res += divider
 
         res += divider
-        res += "Classification\n" 
+        res += "Classification\n"
         res += divider
         res += ", ".join(obj_dict['classifier']) + space
         res += space
@@ -73,24 +77,25 @@ class LuxDetailsCLI():
         res += divider
         res += "Information\n"
         res += divider
-        res += str(Table(columns_information, [[obj_dict['ref_type'], obj_dict['ref_content']]])) + space
+        res += str(Table(columns_information,
+                         [[obj_dict['ref_type'], obj_dict['ref_content']]])) + space
         res += space
 
 
         print(res, end="")
 
     def parse_args(self):
-        """Uses ArgParse to parse the arguments inputted by the user and store it as instance variables.
+        """Uses ArgParse to parse the arguments inputted by the user and store it
+        as instance variables.
+
         Takes in:
             -id: id
         """
-        
+
         parser = argparse.ArgumentParser(
                     prog = 'luxdetails.py', allow_abbrev=False)
-        
 
         parser.add_argument("id", help="the id of the object whose details should be shown")
-        
 
         args = parser.parse_args()
 
@@ -98,4 +103,3 @@ class LuxDetailsCLI():
 
 if __name__ == '__main__':
     LuxDetailsCLI(DB_NAME)
-
