@@ -44,6 +44,7 @@ class LuxDetailsCLI():
         space = "\n"
         res = "\n"
 
+        #build the output
         res += divider
         res += "Label\n"
         res += divider
@@ -68,6 +69,8 @@ class LuxDetailsCLI():
         res += divider
         res += str(Table(columns_information, [[obj_dict['ref_type'], obj_dict['ref_content']]])) + space
         res += space
+
+
         print(res, end="")
 
     def parse_args(self):
