@@ -205,6 +205,7 @@ class LuxDetailsQuery(Query):
         self._columns_produced_by = ["Part", "Name", "Nationalities", "Timespan"]
         self._columns_information = ["Type", "Content"]
         self._format_str_produced=["w", "w", "p", "w"]
+        self._format_str_information=["w","w"]
 
     def search(self, id):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
@@ -231,7 +232,7 @@ class LuxDetailsQuery(Query):
         agent_dict, obj_dict = self.clean_data(data)
         agent_rows_list = self.format_data(agent_dict)
 
-        return [self._columns_produced_by, self._columns_information, agent_rows_list, obj_dict]
+        return [self._columns_produced_by, self._columns_information, self._format_str_information, self._format_str_produced, agent_rows_list, obj_dict]
     
     def format_data(self, obj_dict):
         """Transform each object's dictionary into a list to fit the Table class requirements.
@@ -326,6 +327,8 @@ class LuxDetailsQuery(Query):
 
         return agent_dict, obj_dict
 
+    
+    
     def parse_date(self, begin_date, end_date):
         """Given a begin_date (str) and end_date (str)
         formats the timespan needed for table in the form of {begin_year}-{end_year}.

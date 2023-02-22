@@ -47,9 +47,12 @@ class LuxDetailsCLI():
 
         columns_produced_by = response[0]
         columns_information = response[1]
-        agent_rows_list = response[2]
-        obj_dict = response[3]
-
+        format_str_informaton = response[2]
+        format_str_produced = response[3]
+        agent_rows_list = response[4]
+        obj_dict = response[5]
+        information_list = self.parse_type_content(obj_dict['ref_type'], obj_dict['ref_content'])
+        
         divider = "----------------\n"
         space = "\n"
         res = "\n"
@@ -61,10 +64,11 @@ class LuxDetailsCLI():
         res += obj_dict['label'] + space
         res += space
 
+    
         res += divider
         res += "Produced\n"
         res += divider
-        res += str(Table(columns_produced_by, agent_rows_list)) + space
+        res += str(Table(columns_produced_by, agent_rows_list, format_str=format_str_produced)) + space
         res += space
 
         res += divider
@@ -76,12 +80,19 @@ class LuxDetailsCLI():
         res += divider
         res += "Information\n"
         res += divider
-        res += str(Table(columns_information,
-                         [[obj_dict['ref_type'], obj_dict['ref_content']]])) + space
+        
+        res += str(Table(columns_information, information_list, format_str=format_str_informaton)) + space
         res += space
 
-
         print(res, end="")
+
+    def parse_type_content(self, list_type, list_content):
+        """Parse type and content to fit Table requirements."""
+        
+        new_list = []
+        for index in range(len(list_type)):
+            new_list.append([list_type[index], list_content[index]])
+        return new_list
 
     def parse_args(self):
         """Uses ArgParse to parse the arguments inputted by the user and store it
