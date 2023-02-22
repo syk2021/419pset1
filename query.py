@@ -1,7 +1,5 @@
-from sys import argv, stderr, exit
 from contextlib import closing
 from sqlite3 import connect
-from table import Table
 from datetime import datetime
 
 class Query():
@@ -22,7 +20,7 @@ class Query():
 class LuxQuery(Query):  
     """"Class to represent querying the database. 
     Stores the database file for opening connection to later on. 
-    Stores the columns for the output Table.
+    Stores the columns for the output table.
     """
 
     def __init__(self, db_file):
@@ -158,7 +156,6 @@ class LuxQuery(Query):
         #master dictionary
         obj_dict = {}
 
-
         #loop through each row in the data, get the relevant data, and store them in the dictionary for the relevant object
         for row in data:
             id = str(row[0])
@@ -194,7 +191,10 @@ class LuxQuery(Query):
 
 
 class LuxDetailsQuery(Query):
-
+    """"Class to represent querying the database. 
+    Stores the database file for opening connection to later on. 
+    Stores the columns for the output table.
+    """
     def __init__(self, db_file):
         self._db_file = db_file
         self._columns_produced_by = ["Part", "Name", "Nationalities", "Timespan"]
@@ -204,41 +204,38 @@ class LuxDetailsQuery(Query):
     def search(self, id):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
+                # objects.label, productions.part, agents.name, nationalities.descriptor, agents.begin_date, agents.end_date, classifiers.name
                 smt_str = "SELECT DISTINCT objects.label, productions.part, agents.name, nationalities.descriptor, agents.begin_date, agents.end_date, classifiers.name, \"references\".type, \"references\".content, agents.id"
+                # joining objects and agents using productions
                 smt_str += " FROM objects INNER JOIN productions ON productions.obj_id = objects.id INNER JOIN agents on productions.agt_id = agents.id"
+                # joining nationalities using agents_nationalities
                 smt_str += " INNER JOIN agents_nationalities ON agents_nationalities.agt_id = agents.id INNER JOIN nationalities ON nationalities.id = agents_nationalities.nat_id"
+                # joining references
                 smt_str += " INNER JOIN \"references\" ON \"references\".obj_id = objects.id"
+                # joining classifiers using objects_classifiers
                 smt_str += " INNER JOIN objects_classifiers ON objects_classifiers.obj_id = objects.id INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
-                smt_str += f" WHERE objects.id = {id}"
-                
-                cursor.execute(smt_str)
-                data = cursor.fetchall()
-                agent_dict, obj_dict = self.clean_data(data)
-                agent_rows_list = self.format_data(agent_dict)
+                smt_str += f" WHERE objects.id = ?"
+                smt_params = [id]
 
-                # print("----------------")
-                # print("Label")
-                # print("----------------")
-                # print(obj_dict['label'])
-                # print("")
-                # print("----------------")
-                # print("Produced By")
-                # print("----------------")
-                # print(Table(self._columns_produced_by, agent_rows_list))
-                # print("")
-                # print("----------------")
-                # print("Classification")
-                # print("----------------")
-                # print(", ".join(obj_dict['classifier']))
-                # print("")
-                # print("----------------")
-                # print("Information")
-                # print("----------------")
-                # print(Table(self._columns_information, [[obj_dict['ref_type'], obj_dict['ref_content']]]))
-                # print("")
-                return [self._columns_produced_by, self._columns_information, agent_rows_list, obj_dict]
+                # execute the statement and fetch the results
+                cursor.execute(smt_str, smt_params)
+                data = cursor.fetchall()
+
+            # data formatting
+            agent_dict, obj_dict = self.clean_data(data)
+            agent_rows_list = self.format_data(agent_dict)
+
+            return [self._columns_produced_by, self._columns_information, agent_rows_list, obj_dict]
     
     def format_data(self, obj_dict):
+        """Transform each object's dictionary into a list to fit the Table class requirements.
+
+        Args:
+            obj_dict (dict): dictionary of all the objects
+
+        Returns:
+            rows_list (list): a list with each object as a list which is a "row" in the Table
+        """
         rows_list = []
 
         #loop through each obj in dictionary and convert the obj's dictionary to a list
@@ -253,14 +250,26 @@ class LuxDetailsQuery(Query):
             rows_list.append(list(obj_dict[key].values()))
         
         return rows_list
-
-
     
     def clean_data(self, data):
+        """Creates dictionaries for the object queried and the agents associated with that object 
+        with their relevant information (label, part_produced, produced_by, nationality, begin_date, end_date,
+        classifier, ref_type, ref_content, agent_id).
+        Stores them in master dictionaries (obj_dict, agent_dict). agent_dict has agent's id as key. 
+
+        Args:
+            data (list): data returned from cursor.fetchall()
+
+        Returns:
+            agent_dict (dict):
+                key: agent's id
+                value: dictionary with all information relevant to the agent
+            obj_dict (dict): 
+                value: dictionary with all information relevant to the obhect
+        """
         #master dictionary
         agent_dict = {}
         obj_dict = {}
-
 
         #loop through each row in the data, get the relevant data, and store them in the dictionary for the relevant object
         for row in data:
@@ -277,6 +286,7 @@ class LuxDetailsQuery(Query):
 
             timespan = self.parse_date(begin_date, end_date)
 
+            # create dictionary for object if not already done
             if not obj_dict:
                 obj_dict =  {
                     "label" : label,
@@ -284,10 +294,12 @@ class LuxDetailsQuery(Query):
                     "ref_type": ref_type,
                     "ref_content": ref_content
                 }
+            # if dictionary has already been created, then we append classifiers
             else:
                 if classifier not in obj_dict["classifier"]:
                     obj_dict['classifier'].append(classifier)
 
+            # if agent has not been stored in agent_dict yet
             if agent_id not in agent_dict:
                 agent_dict[agent_id] = {
                     "part": part_produced,
@@ -295,6 +307,7 @@ class LuxDetailsQuery(Query):
                     "nationality": [nationality],
                     "timespan": timespan
                 }
+            # if agent has information stored in dictionary, then we append nationality
             else:
                 if nationality not in agent_dict[agent_id]['nationality']:
                     agent_dict[agent_id]['nationality'].append(nationality)
@@ -302,7 +315,9 @@ class LuxDetailsQuery(Query):
         return agent_dict, obj_dict
 
     def parse_date(self, begin_date, end_date):
-
+        """
+        Given a begin_date (str) and end_date (str), formats the timespan needed for table in the form of {begin_year}-{end_year}.
+        """
         if not begin_date and not end_date:
             return ""
         
