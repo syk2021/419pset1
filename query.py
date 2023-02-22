@@ -62,65 +62,115 @@ class LuxQuery(Query):
         """
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
-                # objects.id, objects.label, agents.name, objects.date,
-                # departments.name, classifiers.name
-                smt_str = "SELECT DISTINCT objects.id, objects.label, agents.name,"
-                smt_str += " productions.part, objects.date, departments.name, classifiers.name"
-                smt_str += " FROM objects INNER JOIN productions ON productions.obj_id = objects.id"
-                smt_str += " INNER JOIN agents ON productions.agt_id = agents.id"
-                # joining objects and departments, using objects_departments
-                smt_str += " INNER JOIN objects_departments ON"
-                smt_str += " objects_departments.obj_id = objects.id"
-                smt_str += " INNER JOIN departments ON departments.id = objects_departments.dep_id"
-                # joining objects and classifiers, using objects_classifiers
-                smt_str += " INNER JOIN objects_classifiers"
+                # making query backbone to be used in each of the 4 queries below
+                smt_str = "SELECT DISTINCT objects.id FROM objects"
+                # join the productions table
+                smt_str += " LEFT OUTER JOIN productions ON productions.obj_id = objects.id"
+                # join the agents table
+                smt_str += " LEFT OUTER JOIN agents ON productions.agt_id = agents.id"
+                # join the objects_departments table
+                smt_str += " LEFT OUTER JOIN objects_departments"
+                smt_str += " ON objects_departments.obj_id = objects.id"
+                # join the departments table
+                smt_str += " LEFT OUTER JOIN departments"
+                smt_str += " ON departments.id = objects_departments.dep_id"
+                # join the objects_classifiers table
+                smt_str += " LEFT OUTER JOIN objects_classifiers"
                 smt_str += " ON objects_classifiers.obj_id = objects.id"
-                smt_str += " INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
+                # join the classifiers table
+                smt_str += " LEFT OUTER JOIN classifiers"
+                smt_str += " ON classifiers.id = objects_classifiers.cls_id"
 
-                # counting how many variables were not None
-                smt_count = 0
-                smt_params = []
+                classifier_list = None
+                department_list = None
+                agent_list = None
+                label_list = None
 
-                if dep or agt or classifier or label:
-                    smt_str += " WHERE"
-
-                #append to the stm_str, using prepared statements to filter objects out
-                # based on the given arguments if they exists
-                if dep:
-                    smt_str += " departments.name LIKE ?"
-                    smt_params.append(f"%{dep}%")
-                    smt_count += 1
-                if agt:
-                    if smt_count >= 1:
-                        smt_str += " AND"
-                    smt_str += " agents.name LIKE ?"
-                    smt_count += 1
-                    smt_params.append(f"%{agt}%")
+                # search classifiers
                 if classifier:
-                    if smt_count >= 1:
-                        smt_str += " AND"
-                    smt_str += " classifiers.name LIKE ?"
-                    smt_count += 1
-                    smt_params.append(f"%{classifier}%")
-                if label:
-                    if smt_count >= 1:
-                        smt_str += " AND"
-                    smt_str += " objects.label LIKE ?"
-                    smt_count += 1
-                    smt_params.append(f"%{label}%")
-                smt_str += " ORDER BY objects.label, objects.date, agents.name,"
-                smt_str += " productions.part, classifiers.name, departments.name"
+                    classifier_smt, classifier_params = self.create_subqueries(
+                        smt_str, "classifier", classifier
+                    )
+                    cursor.execute(classifier_smt, classifier_params)
+                    classifier_data = cursor.fetchall()
+                    classifier_list = self.parse_data(classifier_data)
 
-                #execute the statement and fetch the results
-                cursor.execute(smt_str, smt_params)
-                data = cursor.fetchall()
+                if dep:
+                    department_smt, department_params = self.create_subqueries(
+                        smt_str, "dep", dep
+                    )
+                    cursor.execute(department_smt, department_params)
+                    department_data = cursor.fetchall()
+                    department_list = self.parse_data(department_data)
+
+                if agt:
+                    agent_smt, agent_params = self.create_subqueries(
+                        smt_str, "agt", agt
+                    )
+                    cursor.execute(agent_smt, agent_params)
+                    agent_data = cursor.fetchall()
+                    agent_list = self.parse_data(agent_data)
+
+                if label:
+                    label_smt, label_params = self.create_subqueries(
+                        smt_str, "label", label
+                    )
+                    cursor.execute(label_smt, label_params)
+                    label_data = cursor.fetchall()
+                    label_list = self.parse_data(label_data)
+
+                # metadata_dict stores the data found in each sql query as a dict
+                metadata_dict = {'classifier': classifier_list, 'dep': department_list,
+                                'agt': agent_list, 'label': label_list}
+                # find common ids in all of the sql queries using set operations
+                common_ids = set()
+                for value in metadata_dict.values():
+                    if not common_ids:
+                        common_ids = value
+                    else:
+                        if value:
+                            common_ids &= value
+                common_ids = list(common_ids)
+
+                final_query = "SELECT objects.id, objects.label, agents.name,"
+                final_query += " productions.part, objects.date, departments.name, classifiers.name"
+                # join productions table
+                final_query += " FROM objects LEFT OUTER JOIN productions"
+                final_query += " ON productions.obj_id = objects.id"
+                # join agents table
+                final_query += " LEFT OUTER JOIN agents ON productions.agt_id = agents.id"
+                # join objects_departments table
+                final_query += " LEFT OUTER JOIN objects_departments"
+                final_query += " ON objects_departments.obj_id = objects.id"
+                # join departments table
+                final_query += " LEFT OUTER JOIN departments"
+                final_query += " ON departments.id = objects_departments.dep_id"
+                # join objects_classifiers table
+                final_query += " LEFT OUTER JOIN objects_classifiers"
+                final_query += " ON objects_classifiers.obj_id = objects.id"
+                # join classifiers table
+                final_query += " LEFT OUTER JOIN classifiers"
+                final_query += " ON classifiers.id = objects_classifiers.cls_id"
+                final_query += " WHERE objects.id IN "
+                final_query += "("
+                final_query += ", ".join(str(x) for x in common_ids)
+                final_query += ")"
+                cursor.execute(final_query)
+                final_data = cursor.fetchall()
 
         #data formatting
-        obj_dict = self.clean_data(data)
+        obj_dict = self.clean_data(final_data)
         obj_list = self.format_data(obj_dict)
 
         search_count = len(obj_list)
         return [search_count, self._columns, self._format_str, obj_list]
+
+    def parse_data(self, data):
+        "Given data from SQL query, add it into a set."
+        id_set = set()
+        for entry in data:
+            id_set.add(entry[0])
+        return id_set
 
     def format_data(self, data):
         """Transform each object's dictionary into a list to fit the Table class requirements.
@@ -153,6 +203,19 @@ class LuxQuery(Query):
 
             rows_list.append(list(data[key].values()))
         return rows_list
+
+    def create_subqueries(self, smt_str, subquery_key, subquery_variable):
+        "Creating subqueries for classifier, department, agent, and label search."
+        subquery_dict = {"classifier": "classifiers.name", "dep": "departments.name",
+                         "agt": "agents.name", "label": "objects.label"}
+        subquery_smt = smt_str
+        subquery_params = []
+        # WHERE classifiers.name LIKE ?
+        subquery_smt += " WHERE "
+        subquery_smt += subquery_dict[subquery_key]
+        subquery_smt += " LIKE ?"
+        subquery_params.append(f"%{subquery_variable}%")
+        return subquery_smt, subquery_params
 
     def clean_data(self, data):
         """Creates a dictionary for each object with their relevant information 
