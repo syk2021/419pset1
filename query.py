@@ -130,33 +130,13 @@ class LuxQuery(Query):
                     else:
                         if value:
                             common_ids &= value
-                common_ids = list(common_ids)
+                # common_ids = list(common_ids)
 
-                #final query to get all objects
-                final_query = "SELECT objects.id, objects.label, agents.name,"
-                final_query += " productions.part, objects.date, departments.name, classifiers.name"
-                # join productions table
-                final_query += " FROM objects LEFT OUTER JOIN productions"
-                final_query += " ON productions.obj_id = objects.id"
-                # join agents table
-                final_query += " LEFT OUTER JOIN agents ON productions.agt_id = agents.id"
-                # join objects_departments table
-                final_query += " LEFT OUTER JOIN objects_departments"
-                final_query += " ON objects_departments.obj_id = objects.id"
-                # join departments table
-                final_query += " LEFT OUTER JOIN departments"
-                final_query += " ON departments.id = objects_departments.dep_id"
-                # join objects_classifiers table
-                final_query += " LEFT OUTER JOIN objects_classifiers"
-                final_query += " ON objects_classifiers.obj_id = objects.id"
-                # join classifiers table
-                final_query += " LEFT OUTER JOIN classifiers"
-                final_query += " ON classifiers.id = objects_classifiers.cls_id"
-                final_query += " WHERE objects.id IN "
-                final_query += "("
-                final_query += ", ".join(str(x) for x in common_ids)
-                final_query += ")"
+                #check if args are passed in
+                args_present = bool(dep or agt or classifier or label)
 
+                #create final query to get all the objects with common ids
+                final_query = self.create_final_query(common_ids, args_present)
                 cursor.execute(final_query)
                 final_data = cursor.fetchall()
 
@@ -166,6 +146,54 @@ class LuxQuery(Query):
 
         search_count = len(obj_list)
         return [search_count, self._columns, self._format_str, obj_list]
+
+    def create_final_query(self, common_ids, args_present):
+        """Creates the final query to retrieve all information for objects with common ids
+        If args are not present, it creates query to get general rows instead
+        
+        Args:
+            common_ids (set): set with all the common ids
+            args_present (bool): whether args were entered
+        
+        Returns:
+            final_query (str): query to retrieve all information for objects with common ids
+        """
+
+        final_query = "SELECT objects.id, objects.label, agents.name,"
+        final_query += " productions.part, objects.date, departments.name, classifiers.name"
+        # join productions table
+        final_query += " FROM objects LEFT OUTER JOIN productions"
+        final_query += " ON productions.obj_id = objects.id"
+        # join agents table
+        final_query += " LEFT OUTER JOIN agents ON productions.agt_id = agents.id"
+        # join objects_departments table
+        final_query += " LEFT OUTER JOIN objects_departments"
+        final_query += " ON objects_departments.obj_id = objects.id"
+        # join departments table
+        final_query += " LEFT OUTER JOIN departments"
+        final_query += " ON departments.id = objects_departments.dep_id"
+        # join objects_classifiers table
+        final_query += " LEFT OUTER JOIN objects_classifiers"
+        final_query += " ON objects_classifiers.obj_id = objects.id"
+        # join classifiers table
+        final_query += " LEFT OUTER JOIN classifiers"
+        final_query += " ON classifiers.id = objects_classifiers.cls_id"
+
+        if not args_present:
+            return final_query
+
+        final_query += " WHERE objects.id IN "
+        final_query += "("
+        if common_ids:
+            final_query += ", ".join(str(x) for x in common_ids)
+        else:
+            final_query += ""
+        final_query += ")"
+
+        #sort by appropriate order
+        final_query += " ORDER BY objects.label, objects.date, agents.name,"
+        final_query += " productions.part, classifiers.name, departments.name"
+        return final_query
 
     def create_subqueries(self, smt_str, subquery_key, subquery_variable):
         """Creating subqueries for classifier, department, agent, and label search.
@@ -180,6 +208,7 @@ class LuxQuery(Query):
                          "agt": "agents.name", "label": "objects.label"}
         subquery_smt = smt_str
         subquery_params = []
+
         # WHERE classifiers.name LIKE ?
         subquery_smt += " WHERE "
         subquery_smt += subquery_dict[subquery_key]
