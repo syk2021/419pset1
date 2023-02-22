@@ -214,7 +214,7 @@ class LuxDetailsQuery(Query):
 
     def __init__(self, db_file):
         self._db_file = db_file
-        self._columns_produced_by = ["Part", "Name", "Nationalities", "Timespan"]
+        self._columns_produced_by = ["Part", "Name", "Timespan", "Nationalities"]
         self._columns_information = ["Type", "Content"]
         self._format_str_produced=["w", "w", "p", "w"]
         self._format_str_information=["w","w"]
@@ -225,8 +225,8 @@ class LuxDetailsQuery(Query):
                 # objects.label, productions.part, agents.name, nationalities.descriptor,
                 # agents.begin_date, agents.end_date, classifiers.name
                 smt_str = "SELECT DISTINCT objects.label, productions.part, agents.name,"
-                smt_str += " nationalities.descriptor, agents.begin_date,"
-                smt_str += " agents.end_date, classifiers.name,"
+                smt_str += "agents.begin_date, agents.end_date,"
+                smt_str += " nationalities.descriptor, classifiers.name,"
                 smt_str += " \"references\".type, \"references\".content, agents.id"
                 # joining objects and agents using productions
                 smt_str += " FROM objects INNER JOIN productions ON productions.obj_id = objects.id"
@@ -310,9 +310,9 @@ class LuxDetailsQuery(Query):
             label = row[0]
             part_produced = row[1]
             produced_by = row[2]
-            nationality = row[3]
-            begin_date = row[4]
-            end_date = row[5]
+            begin_date = row[3]
+            end_date = row[4]
+            nationality = row[5]
             classifier = row[6]
             ref_type = row[7]
             ref_content = row[8]
@@ -342,8 +342,8 @@ class LuxDetailsQuery(Query):
                 agent_dict[agent_id] = {
                     "part": part_produced,
                     "name": produced_by,
+                    "timespan": timespan,
                     "nationality": [nationality],
-                    "timespan": timespan
                 }
             # if agent has information stored in dictionary, then we append nationality
             else:
@@ -356,9 +356,6 @@ class LuxDetailsQuery(Query):
         """Given a begin_date (str) and end_date (str)
         formats the timespan needed for table in the form of {begin_year}-{end_year}.
         """
-
-        if not begin_date and not end_date:
-            return ""
 
         begin_year = ""
         end_year = ""

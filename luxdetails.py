@@ -65,7 +65,7 @@ class LuxDetailsCLI():
         res += space
 
         res += divider
-        res += "Produced\n"
+        res += "Produced By\n"
         res += divider
         res += str(Table(columns_produced_by, agent_rows_list,
                         format_str=format_str_produced)) + space
@@ -74,7 +74,7 @@ class LuxDetailsCLI():
         res += divider
         res += "Classification\n"
         res += divider
-        res += ", ".join(obj_dict['classifier']) + space
+        res += ", ".join(obj_dict['classifier']).lower() + space
         res += space
 
         res += divider
