@@ -84,8 +84,8 @@ class LuxQuery(Query):
                 if dep or agt or classifier or label:
                     smt_str += " WHERE"
 
-                #append to the stm_str, using prepared statements to
-                # filter objects out based on the given arguments if they exists
+                #append to the stm_str, using prepared statements to filter objects out
+                # based on the given arguments if they exists
                 if dep:
                     smt_str += f" departments.name LIKE ?"
                     smt_params.append(f"%{dep}%")
