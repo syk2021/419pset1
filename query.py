@@ -368,7 +368,7 @@ class LuxDetailsQuery(Query):
             begin_year = begin_date_dt.year
 
         if end_date:
-            end_date_dt = datetime.strptime(begin_date, '%Y-%m-%d')
+            end_date_dt = datetime.strptime(end_date, '%Y-%m-%d')
             end_year = end_date_dt.year
 
         return f"{begin_year}-{end_year}"
