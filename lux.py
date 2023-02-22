@@ -13,7 +13,7 @@ class LuxCLI():
     """
 
     def __init__(self, db_name) -> None:
-        """Initalizes the CLI with the passed in arguments from the terminal 
+        """Initalizes the CLI with the passed in arguments from the terminal
         and create a query with the given database file.
         Query the database with the args and output the results into Console.
 
@@ -40,7 +40,7 @@ class LuxCLI():
 
     def output_results(self, response):
         """Takes in the results from a database query and output and
-        displays in the console a table of objects filtered by 
+        displays in the console a table of objects filtered by
         department, agent, classification, and title.
 
         Args:
@@ -57,7 +57,7 @@ class LuxCLI():
 
 
     def parse_args(self):
-        """Uses ArgParse to parse the arguments inputted by the user 
+        """Uses ArgParse to parse the arguments inputted by the user
         and store it as instance variables.
         Takes in:
             -d: department

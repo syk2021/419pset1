@@ -6,7 +6,9 @@ class NoSearchResultsError(Exception):
     pass
 
 class Query():
-    """Abstract Query Class for querying databases. Query should be instantiated as LuxQuery or LuxDetailsQuery."""
+    """Abstract Query Class for querying databases. 
+    Query should be instantiated as LuxQuery or LuxDetailsQuery.
+    """
 
     def __init__(self):
         raise NotImplementedError
