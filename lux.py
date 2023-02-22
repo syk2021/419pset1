@@ -1,8 +1,9 @@
 import argparse
+import sqlite3
+import sys
 
 from table import Table
 from query import LuxQuery
-
 
 DB_NAME = "./lux.sqlite"
 
@@ -26,8 +27,11 @@ class LuxCLI():
         self._label = None
 
         self.parse_args()
-
-        response = self._query.search(dep=self._department, agt=self._agent, classifier=self._classifier, label=self._label)
+        try: 
+            response = self._query.search(dep=self._department, agt=self._agent, classifier=self._classifier, label=self._label)
+        except sqlite3.Error as er:
+            print(er, file=sys.stderr)
+            exit(1)
         self.output_results(response)
 
     

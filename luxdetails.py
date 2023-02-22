@@ -1,9 +1,9 @@
 import argparse
+import sys
+import sqlite3
 
 from table import Table
-from query import LuxDetailsQuery
-
-
+from query import LuxDetailsQuery, NoSearchResultsError
 
 DB_NAME = "./lux.sqlite"
 
@@ -21,7 +21,15 @@ class LuxDetailsCLI():
 
         self.parse_args()
 
-        response = self._query.search(self._id)
+        try:
+            response = self._query.search(self._id)
+        except sqlite3.Error as er:
+            print(er, file=sys.stderr)
+            exit(1)
+        except NoSearchResultsError:
+            print("Invalid id.")
+            exit(1)
+
         self.output_results(response)
 
 

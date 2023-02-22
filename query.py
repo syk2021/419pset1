@@ -2,6 +2,9 @@ from contextlib import closing
 from sqlite3 import connect
 from datetime import datetime
 
+class NoSearchResultsError(Exception):
+    pass
+
 class Query():
     """Abstract Query Class for querying databases. Query should be instantiated as LuxQuery or LuxDetailsQuery."""
 
@@ -53,7 +56,6 @@ class LuxQuery(Query):
         Sort Order:
             Sorted first by object label/date, then by agent name/part, then by classifier, then by department name.
         """
-
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 # objects.id, objects.label, agents.name, objects.date, departments.name, classifiers.name
@@ -98,13 +100,15 @@ class LuxQuery(Query):
                 #execute the statement and fetch the results
                 cursor.execute(smt_str, smt_params)
                 data = cursor.fetchall()
-
+        
         #data formatting
         obj_dict = self.clean_data(data)
         obj_list = self.format_data(obj_dict)
 
         search_count = len(obj_list)
         return [search_count, self._columns, self._format_str, obj_list]
+    
+
 
     def format_data(self, obj_dict):
         """Transform each object's dictionary into a list to fit the Table class requirements.
@@ -220,12 +224,14 @@ class LuxDetailsQuery(Query):
                 # execute the statement and fetch the results
                 cursor.execute(smt_str, smt_params)
                 data = cursor.fetchall()
+                if not data:
+                    raise NoSearchResultsError
 
-            # data formatting
-            agent_dict, obj_dict = self.clean_data(data)
-            agent_rows_list = self.format_data(agent_dict)
+        # data formatting
+        agent_dict, obj_dict = self.clean_data(data)
+        agent_rows_list = self.format_data(agent_dict)
 
-            return [self._columns_produced_by, self._columns_information, agent_rows_list, obj_dict]
+        return [self._columns_produced_by, self._columns_information, agent_rows_list, obj_dict]
     
     def format_data(self, obj_dict):
         """Transform each object's dictionary into a list to fit the Table class requirements.
