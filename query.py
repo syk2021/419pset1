@@ -195,11 +195,11 @@ class LuxDetailsQuery(Query):
     Stores the database file for opening connection to later on. 
     Stores the columns for the output table.
     """
+
     def __init__(self, db_file):
         self._db_file = db_file
         self._columns_produced_by = ["Part", "Name", "Nationalities", "Timespan"]
         self._columns_information = ["Type", "Content"]
-        self._format_str_agent = ["w", "w", "p", "w"]
 
     def search(self, id):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
@@ -236,6 +236,7 @@ class LuxDetailsQuery(Query):
         Returns:
             rows_list (list): a list with each object as a list which is a "row" in the Table
         """
+
         rows_list = []
 
         #loop through each obj in dictionary and convert the obj's dictionary to a list
@@ -267,6 +268,7 @@ class LuxDetailsQuery(Query):
             obj_dict (dict): 
                 value: dictionary with all information relevant to the obhect
         """
+
         #master dictionary
         agent_dict = {}
         obj_dict = {}
@@ -315,9 +317,10 @@ class LuxDetailsQuery(Query):
         return agent_dict, obj_dict
 
     def parse_date(self, begin_date, end_date):
+        """Given a begin_date (str) and end_date (str)
+        formats the timespan needed for table in the form of {begin_year}-{end_year}.
         """
-        Given a begin_date (str) and end_date (str), formats the timespan needed for table in the form of {begin_year}-{end_year}.
-        """
+
         if not begin_date and not end_date:
             return ""
         
