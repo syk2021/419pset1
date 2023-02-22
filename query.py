@@ -204,6 +204,7 @@ class LuxDetailsQuery(Query):
         self._db_file = db_file
         self._columns_produced_by = ["Part", "Name", "Nationalities", "Timespan"]
         self._columns_information = ["Type", "Content"]
+        self._format_str_produced=["w", "w", "p", "w"]
 
     def search(self, id):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:

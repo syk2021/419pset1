@@ -66,7 +66,6 @@ class LuxDetailsCLI():
         res += divider
         res += str(Table(columns_produced_by, agent_rows_list)) + space
         res += space
-        res += divider
 
         res += divider
         res += "Classification\n"
