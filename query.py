@@ -332,10 +332,13 @@ class LuxDetailsQuery(Query):
             else:
                 if classifier not in obj_dict["classifier"]:
                     obj_dict['classifier'].append(classifier)
-                if ref_type not in obj_dict['ref_type']:
-                    obj_dict['ref_type'].append(ref_type)
+                # if ref_type not in obj_dict['ref_type'] and :
+                obj_dict['ref_type'].append(ref_type)
                 if ref_content not in obj_dict['ref_content']:
                     obj_dict['ref_content'].append(ref_content)
+                else:
+                    if ref_type:
+                        obj_dict['ref_type'].pop()
 
             # if agent has not been stored in agent_dict yet
             if agent_id not in agent_dict:
