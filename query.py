@@ -12,13 +12,13 @@ class Query():
     def __init__(self):
         raise NotImplementedError
 
-    def search():
+    def search(self):
         raise NotImplementedError
 
-    def clean_data():
+    def clean_data(self, data):
         raise NotImplementedError
 
-    def format_data():
+    def format_data(self, data):
         raise NotImplementedError
 
 class LuxQuery(Query):
@@ -87,25 +87,25 @@ class LuxQuery(Query):
                 #append to the stm_str, using prepared statements to filter objects out
                 # based on the given arguments if they exists
                 if dep:
-                    smt_str += f" departments.name LIKE ?"
+                    smt_str += " departments.name LIKE ?"
                     smt_params.append(f"%{dep}%")
                     smt_count += 1
                 if agt:
                     if smt_count >= 1:
                         smt_str += " AND"
-                    smt_str += f" agents.name LIKE ?"
+                    smt_str += " agents.name LIKE ?"
                     smt_count += 1
                     smt_params.append(f"%{agt}%")
                 if classifier:
                     if smt_count >= 1:
                         smt_str += " AND"
-                    smt_str += f" classifiers.name LIKE ?"
+                    smt_str += " classifiers.name LIKE ?"
                     smt_count += 1
                     smt_params.append(f"%{classifier}%")
                 if label:
                     if smt_count >= 1:
                         smt_str += " AND"
-                    smt_str += f" objects.label LIKE ?"
+                    smt_str += " objects.label LIKE ?"
                     smt_count += 1
                     smt_params.append(f"%{label}%")
                 smt_str += " ORDER BY objects.label, objects.date, agents.name,"
@@ -122,11 +122,11 @@ class LuxQuery(Query):
         search_count = len(obj_list)
         return [search_count, self._columns, self._format_str, obj_list]
 
-    def format_data(self, obj_dict):
+    def format_data(self, data):
         """Transform each object's dictionary into a list to fit the Table class requirements.
 
         Args:
-            obj_dict (dict): dictionary of all the objects
+            data (dict): dictionary of all the objects
 
         Returns:
             rows_list (list): a list with each object as a list which is a "row" in the Table
@@ -135,23 +135,23 @@ class LuxQuery(Query):
         rows_list = []
 
         #loop through each obj in dictionary and convert the obj's dictionary to a list
-        for key in obj_dict:
+        for key in data:
 
             #no more than 1000 objects in output
             if len(rows_list) == 1000:
                 break
 
             #sort approriate key in ascending order
-            obj_dict[key]['produced_by'].sort()
-            obj_dict[key]['department'].sort()
-            obj_dict[key]['classifier'].sort()
+            data[key]['produced_by'].sort()
+            data[key]['department'].sort()
+            data[key]['classifier'].sort()
 
             #join appropriate strings together
-            obj_dict[key]["produced_by"] = ", ".join(obj_dict[key]["produced_by"])
-            obj_dict[key]["department"] = ", ".join(obj_dict[key]["department"])
-            obj_dict[key]["classifier"] = "|".join(obj_dict[key]["classifier"])
+            data[key]["produced_by"] = ", ".join(data[key]["produced_by"])
+            data[key]["department"] = ", ".join(data[key]["department"])
+            data[key]["classifier"] = "|".join(data[key]["classifier"])
 
-            rows_list.append(list(obj_dict[key].values()))
+            rows_list.append(list(data[key].values()))
         return rows_list
 
     def clean_data(self, data):
@@ -219,7 +219,7 @@ class LuxDetailsQuery(Query):
         self._format_str_produced=["w", "w", "p", "w"]
         self._format_str_information=["w","w"]
 
-    def search(self, id):
+    def search(self, obj_id):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 # objects.label, productions.part, agents.name, nationalities.descriptor,
@@ -242,8 +242,8 @@ class LuxDetailsQuery(Query):
                 smt_str += " INNER JOIN objects_classifiers ON"
                 smt_str += " objects_classifiers.obj_id = objects.id"
                 smt_str += " INNER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
-                smt_str += f" WHERE objects.id = ?"
-                smt_params = [id]
+                smt_str += " WHERE objects.id = ?"
+                smt_params = [obj_id]
 
                 # execute the statement and fetch the results
                 cursor.execute(smt_str, smt_params)
@@ -257,11 +257,11 @@ class LuxDetailsQuery(Query):
         return [self._columns_produced_by, self._columns_information,
                 self._format_str_information, self._format_str_produced, agent_rows_list, obj_dict]
 
-    def format_data(self, obj_dict):
-        """Transform each object's dictionary into a list to fit the Table class requirements.
+    def format_data(self, data):
+        """Transform each agent's dictionary into a list to fit the Table class requirements.
 
         Args:
-            obj_dict (dict): dictionary of all the objects
+            data (dict): dictionary of all the agents
 
         Returns:
             rows_list (list): a list with each object as a list which is a "row" in the Table
@@ -270,15 +270,15 @@ class LuxDetailsQuery(Query):
         rows_list = []
 
         #loop through each obj in dictionary and convert the obj's dictionary to a list
-        for key in obj_dict:
+        for key in data:
 
             #no more than 1000 objects in output
             if len(rows_list) == 1000:
                 break
 
             #join appropriate strings together
-            obj_dict[key]["nationality"] = "|".join(obj_dict[key]["nationality"])
-            rows_list.append(list(obj_dict[key].values()))
+            data[key]["nationality"] = "|".join(data[key]["nationality"])
+            rows_list.append(list(data[key].values()))
 
         return rows_list
 
