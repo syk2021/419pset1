@@ -52,7 +52,7 @@ class LuxDetailsCLI():
         agent_rows_list = response[4]
         obj_dict = response[5]
         information_list = self.parse_type_content(obj_dict['ref_type'], obj_dict['ref_content'])
-        
+
         divider = "----------------\n"
         space = "\n"
         res = "\n"
@@ -64,11 +64,11 @@ class LuxDetailsCLI():
         res += obj_dict['label'] + space
         res += space
 
-    
         res += divider
         res += "Produced\n"
         res += divider
-        res += str(Table(columns_produced_by, agent_rows_list, format_str=format_str_produced)) + space
+        res += str(Table(columns_produced_by, agent_rows_list,
+                        format_str=format_str_produced)) + space
         res += space
 
         res += divider
@@ -80,18 +80,18 @@ class LuxDetailsCLI():
         res += divider
         res += "Information\n"
         res += divider
-        
-        res += str(Table(columns_information, information_list, format_str=format_str_informaton)) + space
+
+        res += str(Table(columns_information, information_list,
+                         format_str=format_str_informaton)) + space
         res += space
 
         print(res, end="")
 
     def parse_type_content(self, list_type, list_content):
         """Parse type and content to fit Table requirements."""
-        
         new_list = []
-        for index in range(len(list_type)):
-            new_list.append([list_type[index], list_content[index]])
+        for index, type_elem in enumerate(list_type):
+            new_list.append([type_elem, list_content[index]])
         return new_list
 
     def parse_args(self):
