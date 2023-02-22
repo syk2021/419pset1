@@ -15,7 +15,7 @@ class Query():
     
     def search():
         raise NotImplementedError
-    
+
     def clean_data():
         raise NotImplementedError
     
@@ -74,7 +74,8 @@ class LuxQuery(Query):
                 if dep or agt or classifier or label:
                     smt_str += " WHERE"
 
-                #append to the stm_str, using prepared statements to filter objects out based on the given arguments if they exists
+                #append to the stm_str, using prepared statements to filter objects 
+                #based on the given arguments if they exists
                 if dep:
                     smt_str += f" departments.name LIKE ?"
                     smt_params.append(f"%{dep}%")
@@ -147,7 +148,8 @@ class LuxQuery(Query):
 
 
     def clean_data(self, data):
-        """Creates a dictionary for each object with their relevant information (id, label, produced_by, date, department, classifers).
+        """Creates a dictionary for each object with their relevant information 
+        (id, label, produced_by, date, department, classifers).
         Stores them in a master dictionary (obj_dict) with their id as the key.
 
         Args:
