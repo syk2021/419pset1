@@ -206,7 +206,12 @@ class LuxDetailsQuery(Query):
                 break
 
             #join appropriate strings together
-            data[key]["nationality"] = "|".join(data[key]["nationality"])
+            if data[key]["nationality"] and data[key]["nationality"][0]:
+                data[key]["nationality"] = "|".join(data[key]["nationality"])
+            else:
+                data[key]["nationality"] = ""
+
+            
             rows_list.append(list(data[key].values()))
 
         return rows_list
