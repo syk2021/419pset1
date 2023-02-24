@@ -105,9 +105,7 @@ class LuxQuery(Query):
     # WHERE 1 label, 
                 #append to the stm_str, using prepared statements to filter objects
                 # based on the given arguments if they exists
-                
-               
-                
+
                 #create the sort order for the query based on present args
                 sort_str = " ORDER BY objects.label, objects.date, "
                 sort_list = []
