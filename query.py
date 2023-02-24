@@ -12,19 +12,23 @@ class Query():
     """Abstract Query Class for querying databases.
     Query should be instantiated as LuxQuery or LuxDetailsQuery.
     """
+
     def __init__(self):
         raise NotImplementedError
 
     def search(self):
         """Function that executes the query."""
+
         raise NotImplementedError
 
     def clean_data(self, data):
         """Function used to clean data."""
+
         raise NotImplementedError
 
     def format_data(self, data):
         """Function used to format data."""
+
         raise NotImplementedError
 
 class LuxQuery(Query):
@@ -66,6 +70,7 @@ class LuxQuery(Query):
             Sorted first by object label/date, then by agent name/part,
             then by classifier, then by department name.
         """
+
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 # making query backbone to be used in each of the 4 queries below
@@ -121,6 +126,7 @@ class LuxQuery(Query):
                 param_sort_str = sort_str +  ", ".join(sort_list)
                 smt_str += param_sort_str
                 smt_str += " LIMIT 1000"
+
                 #execute the statement and fetch the results
                 cursor.execute(smt_str, smt_params)
                 data = cursor.fetchall()
@@ -180,6 +186,7 @@ class LuxDetailsQuery(Query):
                 data = cursor.fetchall()
                 if not data:
                     raise NoSearchResultsError
+
         # data formatting
         agent_dict, obj_dict = self.clean_data(data)
         agent_rows_list = self.format_data(agent_dict)

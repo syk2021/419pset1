@@ -7,7 +7,7 @@ Sophia Kang contribution:
 - initial query & backbone structure for LuxQuery class
 - writing query for LuxDetailsQuery class
 - error handling with try except clauses in lux.py, luxdetails.py
-- writing LuxDetailsCLI output function
+- writing LuxDetailsCLI output function to print to console
 - writing docstrings for classes and functions
 - pylint on query.py, lux.py, luxdetails.py, lux_query_sql.py
 - testing on lux.py, luxdetails.py & error handling
@@ -16,7 +16,7 @@ Sophia Kang contribution:
 Phuc Duong contribution:
 - Common Table Expression query (used in LuxQuery class)
 - implementing argparse module in LuxCLI and LuxDetailsCLI
-- writing LuxCLI output function
+- writing LuxCLI output function to print to console
 - reading & implementing Table documentation
 - parsing and cleaning data for query.py
 - modularizing the code
@@ -24,7 +24,7 @@ Phuc Duong contribution:
 - testing on lux.py, luxdetails.py & error handling
 
 ## Description of outside help
-ULA office hours
+ULA office hours (structuring SQL query)
 
 ## Description of sources of information that you used while doing the assignment, not direct help from people
 None
@@ -35,7 +35,7 @@ None
 ## Assessment of the assignment
 - Did it help you to learn? / What did it help you to learn?
 
-It helped us write SQL queries - we both wrote Common Table Expression (CTE) for the first time. We also learned the difference between LEFT OUTER JOIN and INNER JOIN.
+It helped us learn how to write SQL queries - we both wrote Common Table Expression (CTE) for the first time. We also learned the difference between LEFT OUTER JOIN and INNER JOIN, and how to implement them in practice. It also helped us learn how to use the argparse module. 
 
 - Do you have any suggestions for improvement? Etc.
 

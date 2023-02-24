@@ -1,4 +1,5 @@
 """Module for running luxdetails.py"""
+
 import argparse
 import sys
 import sqlite3
@@ -12,6 +13,7 @@ class LuxDetailsCLI():
     """"Class to represent the command line interface for the program.
     Stores the a query class, and the inputted id of the object.
     """
+
     def __init__(self, db_name):
         """Initalizes the CLI with the id given be the user
         and create a query with the given database file.
@@ -92,6 +94,7 @@ class LuxDetailsCLI():
 
     def parse_type_content(self, list_type, list_content):
         """Parse type and content to fit Table requirements."""
+
         new_list = []
         for index, type_elem in enumerate(list_type):
             new_list.append([type_elem, list_content[index]])

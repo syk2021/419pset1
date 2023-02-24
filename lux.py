@@ -1,4 +1,5 @@
 """Module for running lux.py"""
+
 import argparse
 import sqlite3
 import sys
@@ -66,6 +67,7 @@ class LuxCLI():
             -c: classifer
             -l: label
         """
+
         parser = argparse.ArgumentParser(
                     prog = 'lux.py', allow_abbrev=False)
 
