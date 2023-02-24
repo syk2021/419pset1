@@ -1,9 +1,12 @@
+"""Module handling queries for the database."""
+
 from contextlib import closing
 from sqlite3 import connect
 from datetime import datetime
 from lux_query_sql import query_lux
+
 class NoSearchResultsError(Exception):
-    pass
+    """Exception class to handle no search results."""
 
 class Query():
     """Abstract Query Class for querying databases.
@@ -13,12 +16,15 @@ class Query():
         raise NotImplementedError
 
     def search(self):
+        """Function that executes the query."""
         raise NotImplementedError
 
     def clean_data(self, data):
+        """Function used to clean data."""
         raise NotImplementedError
 
     def format_data(self, data):
+        """Function used to format data."""
         raise NotImplementedError
 
 class LuxQuery(Query):
@@ -63,11 +69,7 @@ class LuxQuery(Query):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 # making query backbone to be used in each of the 4 queries below
-                 # counting how many variables were not None
-
                 smt_str = query_lux
-
-                # counting how many variables were not None
                 smt_count = 0
                 smt_params = []
 
@@ -96,7 +98,7 @@ class LuxQuery(Query):
                     smt_str += " classifier.classification LIKE ?"
                     smt_count += 1
                     smt_params.append(f"%{classifier}%")
-   
+
                 smt_str += " GROUP BY objects.id, objects.label"
 
                 #create the sort order for the query based on present args
@@ -155,7 +157,8 @@ class LuxDetailsQuery(Query):
                 smt_str += " nationalities.descriptor, classifiers.name,"
                 smt_str += " \"references\".type, \"references\".content, agents.id"
                 # joining objects and agents using productions
-                smt_str += " FROM objects LEFT OUTER JOIN productions ON productions.obj_id = objects.id"
+                smt_str += " FROM objects LEFT OUTER JOIN"
+                smt_str += " productions ON productions.obj_id = objects.id"
                 smt_str += " LEFT OUTER JOIN agents on productions.agt_id = agents.id"
                 # joining nationalities using agents_nationalities
                 smt_str += " LEFT OUTER JOIN agents_nationalities"
@@ -167,7 +170,8 @@ class LuxDetailsQuery(Query):
                 # joining classifiers using objects_classifiers
                 smt_str += " LEFT OUTER JOIN objects_classifiers ON"
                 smt_str += " objects_classifiers.obj_id = objects.id"
-                smt_str += " LEFT OUTER JOIN classifiers ON classifiers.id = objects_classifiers.cls_id"
+                smt_str += " LEFT OUTER JOIN classifiers"
+                smt_str += " ON classifiers.id = objects_classifiers.cls_id"
                 smt_str += " WHERE objects.id = ?"
                 smt_params = [obj_id]
 
@@ -208,7 +212,6 @@ class LuxDetailsQuery(Query):
             else:
                 data[key]["nationality"] = ""
 
-            
             rows_list.append(list(data[key].values()))
 
         return rows_list

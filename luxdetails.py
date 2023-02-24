@@ -1,3 +1,4 @@
+"""Module for running luxdetails.py"""
 import argparse
 import sys
 import sqlite3
@@ -8,6 +9,9 @@ from query import LuxDetailsQuery, NoSearchResultsError
 DB_NAME = "./lux.sqlite"
 
 class LuxDetailsCLI():
+    """"Class to represent the command line interface for the program.
+    Stores the a query class, and the inputted id of the object.
+    """
     def __init__(self, db_name):
         """Initalizes the CLI with the id given be the user
         and create a query with the given database file.
@@ -32,7 +36,6 @@ class LuxDetailsCLI():
             sys.exit()
 
         self.output_results(response)
-
 
     def output_results(self, response):
         """Takes in the results from a database query

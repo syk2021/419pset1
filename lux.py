@@ -1,3 +1,4 @@
+"""Module for running lux.py"""
 import argparse
 import sqlite3
 import sys
