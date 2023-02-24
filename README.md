@@ -42,4 +42,4 @@ It helped us write SQL queries - we both wrote Common Table Expression (CTE) for
 An example on how to use the Table function or example outputs in the spec would be helpful.
 
 ## Any information to graders
-For query.py, we have a pylint error that says too many local variables, but we only exceeded the limit by 1 or 3 and have tried to eliminate local variables without making the code unreadable. There is an error with the number of arguments from LuxDetailsQuery, because we inherit from the Query class, but we think this is negligible for the most part. We have no errors for lux.py and luxdetails.py.
+For query.py, we have a pylint error that says too many local variables, but we only exceeded the limit by 1 or 3 and have tried to eliminate local variables without making the code unreadable. There is an error with the number of arguments from LuxDetailsQuery, because we inherit from the Query class, but we think this is negligible for the most part. We have no errors for lux.py, luxdetails.py, and lux_query_sql.py.
