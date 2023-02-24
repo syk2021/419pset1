@@ -9,7 +9,7 @@ Sophia Kang contribution:
 - error handling with try except clauses in lux.py, luxdetails.py
 - writing LuxDetailsCLI output function
 - writing docstrings for classes and functions
-- pylint on query.py, lux.py, luxdetails.py
+- pylint on query.py, lux.py, luxdetails.py, lux_query_sql.py
 - testing on lux.py, luxdetails.py & error handling
 - readme documentation
 
@@ -20,8 +20,8 @@ Phuc Duong contribution:
 - reading & implementing Table documentation
 - parsing and cleaning data for query.py
 - modularizing the code
-- pylint on query.py, lux.py, luxdetails.py & error handling
-- testing on lux.py, luxdetails.py
+- pylint on query.py, lux.py, luxdetails.py
+- testing on lux.py, luxdetails.py & error handling
 
 ## Description of outside help
 ULA office hours
@@ -34,9 +34,11 @@ None
 
 ## Assessment of the assignment
 - Did it help you to learn? / What did it help you to learn?
+
 It helped us write SQL queries - we both wrote Common Table Expression (CTE) for the first time. We also learned the difference between LEFT OUTER JOIN and INNER JOIN.
 
 - Do you have any suggestions for improvement? Etc.
+
 An example on how to use the Table function or example outputs in the spec would be helpful.
 
 ## Any information to graders

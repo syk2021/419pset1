@@ -1,4 +1,6 @@
-query_lux = """WITH classifier AS (
+"""Module for main query in LuxQuery class in query.py."""
+
+QUERY_LUX = """WITH classifier AS (
     SELECT id, group_concat(cls_name, '|') as classification FROM (
         SELECT objects.id, LOWER(classifiers.name) AS cls_name
         FROM objects
@@ -29,4 +31,3 @@ LEFT OUTER JOIN classifier ON classifier.id = objects.id
 LEFT OUTER JOIN agent ON agent.id = objects.id
 LEFT OUTER JOIN department ON department.id = objects.id
 """
-

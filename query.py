@@ -3,7 +3,7 @@
 from contextlib import closing
 from sqlite3 import connect
 from datetime import datetime
-from lux_query_sql import query_lux
+from lux_query_sql import QUERY_LUX
 
 class NoSearchResultsError(Exception):
     """Exception class to handle no search results."""
@@ -69,7 +69,7 @@ class LuxQuery(Query):
         with connect(self._db_file, isolation_level=None, uri=True) as connection:
             with closing(connection.cursor()) as cursor:
                 # making query backbone to be used in each of the 4 queries below
-                smt_str = query_lux
+                smt_str = QUERY_LUX
                 smt_count = 0
                 smt_params = []
 
