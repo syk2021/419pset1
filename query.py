@@ -72,7 +72,7 @@ class LuxQuery(Query):
                 smt_params = []
 
                 # WHERE clause
-                if dep or label:
+                if dep or label or agt or classifier:
                     smt_str += " WHERE"
                 if dep:
                     smt_str += " department.dep_name LIKE ?"
@@ -96,15 +96,8 @@ class LuxQuery(Query):
                     smt_str += " classifier.classification LIKE ?"
                     smt_count += 1
                     smt_params.append(f"%{classifier}%")
-                
+   
                 smt_str += " GROUP BY objects.id, objects.label"
-
-                # if dep or agt or classifier or label:
-                #     smt_str += " HAVING"
-    # GROUP BY HAVING column LIKE 
-    # WHERE 1 label, 
-                #append to the stm_str, using prepared statements to filter objects
-                # based on the given arguments if they exists
 
                 #create the sort order for the query based on present args
                 sort_str = " ORDER BY objects.label, objects.date, "
@@ -126,12 +119,9 @@ class LuxQuery(Query):
                 param_sort_str = sort_str +  ", ".join(sort_list)
                 smt_str += param_sort_str
                 smt_str += " LIMIT 1000"
-                print(smt_str)
-                print(smt_params)
                 #execute the statement and fetch the results
                 cursor.execute(smt_str, smt_params)
                 data = cursor.fetchall()
-                print(data)
                 search_count = len(data)
 
         return search_count, self._columns, self._format_str, data
